@@ -1,0 +1,10 @@
+{
+  "name": "code-runner",
+  "version": "1.0.0",
+  "description": "Isolated Code Execution Sandbox Service for Code-a-thon 2026",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {}
+}
