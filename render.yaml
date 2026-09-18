@@ -1,10 +1,9 @@
 services:
-  # 1. Spring Boot 3 Backend API
+  # Unified All-in-One Backend + Compilers (C, Python 3, Java) Code Runner
   - type: web
     name: codeathon-backend
     env: docker
-    dockerfilePath: backend/Dockerfile
-    dockerContext: backend
+    dockerfilePath: Dockerfile
     plan: starter
     region: oregon
     healthCheckPath: /api/v1/rounds
@@ -14,7 +13,7 @@ services:
       - key: CORS_ALLOWED_ORIGINS
         value: https://*.vercel.app,http://localhost:3000,http://localhost:3001
       - key: CODE_RUNNER_URL
-        value: http://codeathon-runner:5050
+        value: http://localhost:5050
       - key: JWT_SECRET
         generateValue: true
       - key: SPRING_DATASOURCE_URL
@@ -25,15 +24,3 @@ services:
         value: sa
       - key: SPRING_DATASOURCE_PASSWORD
         value: password
-
-  # 2. Ephemeral Code Execution Sandbox Runner
-  - type: web
-    name: codeathon-runner
-    env: docker
-    dockerfilePath: code-runner/Dockerfile
-    dockerContext: code-runner
-    plan: starter
-    region: oregon
-    envVars:
-      - key: PORT
-        value: 5050
