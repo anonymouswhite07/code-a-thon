@@ -34,6 +34,39 @@ try {
 
 console.log(`[CodeRunner] Environment check: GCC=${hasGcc}, Java=${hasJava}, Python=${hasPython}`);
 
+// Concurrency queue to protect memory on free hosting tiers (e.g. Render 512MB RAM)
+class ExecutionQueue {
+  constructor(maxConcurrent = 2) {
+    this.maxConcurrent = maxConcurrent;
+    this.current = 0;
+    this.queue = [];
+  }
+
+  enqueue(fn) {
+    return new Promise((resolve, reject) => {
+      this.queue.push({ fn, resolve, reject });
+      this.next();
+    });
+  }
+
+  next() {
+    if (this.current >= this.maxConcurrent || this.queue.length === 0) {
+      return;
+    }
+    this.current++;
+    const { fn, resolve, reject } = this.queue.shift();
+    fn()
+      .then(resolve)
+      .catch(reject)
+      .finally(() => {
+        this.current--;
+        this.next();
+      });
+  }
+}
+
+const runnerQueue = new ExecutionQueue(2);
+
 function runProcess(cmd, args, options = {}, input = '', timeoutMs = 2000) {
   return new Promise((resolve) => {
     const startTime = Date.now();
@@ -354,13 +387,13 @@ const server = http.createServer(async (req, res) => {
         }
 
         const testCases = Array.isArray(payload.testCases) ? payload.testCases : [];
-        const result = await executeSubmission({
+        const result = await runnerQueue.enqueue(() => executeSubmission({
           language: payload.language,
           sourceCode: payload.sourceCode,
           testCases,
           timeLimitMs: payload.timeLimitMs || 2000,
           memoryLimitMb: payload.memoryLimitMb || 128
-        });
+        }));
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(result));

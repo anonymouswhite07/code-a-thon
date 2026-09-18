@@ -14,7 +14,7 @@ PORT=5050 node /app/runner/server.js &
 # Give the runner a moment to bind
 sleep 1
 
-# Start Spring Boot Backend on Render's assigned port
+# Start Spring Boot Backend with memory constraints tailored for 512MB RAM free cloud instances
 echo "[Boot] Starting Spring Boot Backend on external port ${SERVER_PORT}..."
 export PORT=${SERVER_PORT}
-exec java -XX:+UseG1GC -XX:MaxRAMPercentage=75 -Dserver.port=${SERVER_PORT} -jar /app/app.jar
+exec java -XX:+UseSerialGC -Xms128m -Xmx240m -XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Dserver.port=${SERVER_PORT} -jar /app/app.jar
