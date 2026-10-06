@@ -38,6 +38,7 @@ Because we bundle the Spring Boot API, compilers, and the execution sandbox into
    * `CORS_ALLOWED_ORIGINS` = `https://*.vercel.app,http://localhost:3000,http://localhost:3001`
    * `CODE_RUNNER_URL` = `http://localhost:5050`
    * `JWT_SECRET` = `404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970`
+   * `DATABASE_URL` = *(Optional)* Paste your free PostgreSQL URI from [Neon.tech](https://neon.tech) or [Supabase](https://supabase.com) (e.g., `postgresql://user:pass@ep-xyz.neon.tech/neondb?sslmode=require`). If omitted, it automatically uses embedded in-memory H2.
 5. Click **Deploy Web Service** and copy your live URL.
 
 ---
@@ -53,3 +54,16 @@ Because we bundle the Spring Boot API, compilers, and the execution sandbox into
    * **Key**: `NEXT_PUBLIC_API_URL`
    * **Value**: `https://<your-backend-name>.onrender.com/api/v1`
 5. Click **Deploy**.
+
+---
+
+## 3. Cloud Database Persistence (Free Tier)
+
+By default, the application runs with an embedded H2 database with automatic schema generation and seed data.
+
+To persist competition scores, submissions, and users across container redeploys:
+1. Create a free PostgreSQL database at [Neon.tech](https://neon.tech) (0.5 GB free forever) or [Supabase](https://supabase.com).
+2. Copy the connection string (`postgresql://...`).
+3. In your Render Dashboard, add the environment variable:
+   * `DATABASE_URL` = `postgresql://...`
+4. The backend automatically parses the credentials, configures HikariCP with SSL, and handles schema migration!

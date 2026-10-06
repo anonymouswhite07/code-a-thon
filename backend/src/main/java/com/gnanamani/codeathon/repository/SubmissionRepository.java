@@ -13,6 +13,7 @@ import java.util.Optional;
 @Repository
 public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     List<Submission> findByParticipantOrderBySubmissionTimeDesc(Participant participant);
+    Optional<Submission> findFirstByParticipantOrderBySubmissionTimeDesc(Participant participant);
     List<Submission> findByParticipantIdOrderBySubmissionTimeDesc(Long participantId);
     List<Submission> findByParticipantIdAndQuestionIdOrderBySubmissionTimeDesc(Long participantId, Long questionId);
     List<Submission> findByRoundIdOrderBySubmissionTimeDesc(Long roundId);

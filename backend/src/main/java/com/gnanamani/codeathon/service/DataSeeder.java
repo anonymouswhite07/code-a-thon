@@ -51,10 +51,14 @@ public class DataSeeder implements CommandLineRunner {
         configRepository.save(new CompetitionConfig("results.published", "false"));
         configRepository.save(new CompetitionConfig("event.date", "2026-03-28T09:00:00"));
 
-        // 2. Seed Admin & Judges
-        User superAdmin = new User("superadmin@gct.ac.in", passwordEncoder.encode("Super@2026"), "Dr. K. Arulmurugan (Principal)", Role.ROLE_SUPER_ADMIN);
-        User admin = new User("admin@gct.ac.in", passwordEncoder.encode("Admin@2026"), "Prof. S. Gnanasambandan (HOD CSE)", Role.ROLE_ADMIN);
-        User judge = new User("judge@gct.ac.in", passwordEncoder.encode("Judge@2026"), "Dr. R. Priyadharshini (Lead Judge)", Role.ROLE_JUDGE);
+        // 2. Seed Admin & Judges (passwords configurable via env vars for production safety)
+        String superAdminPass = System.getenv().getOrDefault("SUPER_ADMIN_PASSWORD", "Super@2026");
+        String adminPass = System.getenv().getOrDefault("ADMIN_PASSWORD", "Admin@2026");
+        String judgePass = System.getenv().getOrDefault("JUDGE_PASSWORD", "Judge@2026");
+
+        User superAdmin = new User("superadmin@gct.ac.in", passwordEncoder.encode(superAdminPass), "Dr. K. Arulmurugan (Principal)", Role.ROLE_SUPER_ADMIN);
+        User admin = new User("admin@gct.ac.in", passwordEncoder.encode(adminPass), "Prof. S. Gnanasambandan (HOD CSE)", Role.ROLE_ADMIN);
+        User judge = new User("judge@gct.ac.in", passwordEncoder.encode(judgePass), "Dr. R. Priyadharshini (Lead Judge)", Role.ROLE_JUDGE);
         userRepository.saveAll(List.of(superAdmin, admin, judge));
 
         // 3. Seed Rounds

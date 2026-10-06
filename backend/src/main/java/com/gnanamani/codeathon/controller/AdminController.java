@@ -87,7 +87,7 @@ public class AdminController {
             @PathVariable Long id,
             @RequestBody RoundControlRequest request,
             Authentication authentication) {
-        String adminEmail = authentication != null ? authentication.getName() : "admin@gct.ac.in";
+        String adminEmail = getAdminEmail(authentication);
         String action = request.getAction() != null ? request.getAction().toUpperCase() : "START";
 
         Round round;
@@ -123,7 +123,7 @@ public class AdminController {
             @PathVariable Long id,
             @RequestParam boolean locked,
             Authentication authentication) {
-        String adminEmail = authentication != null ? authentication.getName() : "admin@gct.ac.in";
+        String adminEmail = getAdminEmail(authentication);
         competitionEngineService.setRoundLock(id, locked, adminEmail);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
@@ -172,7 +172,7 @@ public class AdminController {
         p.setIsSuspended(newStatus);
         participantRepository.save(p);
 
-        String adminEmail = authentication != null ? authentication.getName() : "admin@gct.ac.in";
+        String adminEmail = getAdminEmail(authentication);
         auditService.log(adminEmail, newStatus ? "PARTICIPANT_SUSPENDED" : "PARTICIPANT_RESTORED",
                 "Participant " + p.getId(), p.getUser().getEmail(), "127.0.0.1");
 
@@ -245,7 +245,7 @@ public class AdminController {
             }
         }
 
-        String adminEmail = authentication != null ? authentication.getName() : "admin@gct.ac.in";
+        String adminEmail = getAdminEmail(authentication);
         auditService.log(adminEmail, "QUESTION_CREATED", "Question " + saved.getId(), saved.getTitle(), "127.0.0.1");
 
         return ResponseEntity.ok(ApiResponse.ok(saved.getId()));
@@ -262,7 +262,7 @@ public class AdminController {
         testCaseRepository.deleteAll(testCaseRepository.findByQuestionOrderByOrderIndexAsc(q));
         questionRepository.delete(q);
 
-        String adminEmail = authentication != null ? authentication.getName() : "admin@gct.ac.in";
+        String adminEmail = getAdminEmail(authentication);
         auditService.log(adminEmail, "QUESTION_DELETED", "Question " + id, q.getTitle(), "127.0.0.1");
 
         return ResponseEntity.ok(ApiResponse.ok(null));
@@ -273,7 +273,7 @@ public class AdminController {
     public ResponseEntity<ApiResponse<AnnouncementResponse>> createAnnouncement(
             @Valid @RequestBody CreateAnnouncementRequest request,
             Authentication authentication) {
-        String adminEmail = authentication != null ? authentication.getName() : "admin@gct.ac.in";
+        String adminEmail = getAdminEmail(authentication);
 
         Announcement a = new Announcement(
                 request.getTitle(),
@@ -310,7 +310,7 @@ public class AdminController {
     public ResponseEntity<ApiResponse<Void>> toggleLeaderboardFreeze(
             @RequestParam boolean freeze,
             Authentication authentication) {
-        String adminEmail = authentication != null ? authentication.getName() : "admin@gct.ac.in";
+        String adminEmail = getAdminEmail(authentication);
         leaderboardService.setFreezeStatus(freeze, adminEmail);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
@@ -319,7 +319,7 @@ public class AdminController {
     public ResponseEntity<ApiResponse<Void>> publishFinalResults(
             @RequestParam boolean publish,
             Authentication authentication) {
-        String adminEmail = authentication != null ? authentication.getName() : "admin@gct.ac.in";
+        String adminEmail = getAdminEmail(authentication);
         leaderboardService.setFinalResultsPublished(publish, adminEmail);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
@@ -339,5 +339,12 @@ public class AdminController {
         }).collect(Collectors.toList());
 
         return ResponseEntity.ok(ApiResponse.ok(list));
+    }
+
+    private String getAdminEmail(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null || authentication.getName().isBlank()) {
+            throw new org.springframework.security.access.AccessDeniedException("Authenticated administrator session required");
+        }
+        return authentication.getName();
     }
 }

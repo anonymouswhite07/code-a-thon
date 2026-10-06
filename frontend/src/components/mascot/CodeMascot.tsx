@@ -6,12 +6,14 @@ export type MascotState =
   | 'idle'
   | 'typing'
   | 'thinking'
+  | 'confused'
   | 'failure'
+  | 'debugging'
   | 'success'
-  | 'running'
   | 'coffee'
   | 'celebrating'
-  | 'winner';
+  | 'winner'
+  | 'running';
 
 interface CodeMascotProps {
   state?: MascotState;
@@ -23,14 +25,16 @@ interface CodeMascotProps {
 }
 
 const STATE_MESSAGES: Record<MascotState, string> = {
-  idle: 'Ready to write code?',
+  idle: 'Ready to write your first line? 🚀',
   typing: 'char *ptr = malloc(sizeof(int));',
   thinking: 'There must be an O(N log N) approach...',
+  confused: 'Wait... where did that edge case come from? 🤔',
   failure: 'Segmentation fault (core dumped)... 😭',
-  success: 'All test cases green! ✓',
-  running: 'Executing test cases against sandbox...',
-  coffee: 'Coffee: O(1) energy boost ☕',
-  celebrating: 'Three rounds down! 🎉',
+  debugging: 'Inspecting memory bounds & pointer offsets... 🔍',
+  success: 'All test cases green! Accepted ✓',
+  running: 'Executing against automated test suite...',
+  coffee: 'Coffee: O(1) energy boost for the finals ☕',
+  celebrating: 'Three rounds down! Unstoppable! 🎉',
   winner: 'Grand Champion 2026 🏆'
 };
 
@@ -42,16 +46,20 @@ export const CodeMascot: React.FC<CodeMascotProps> = ({
   customQuote,
   reactionText
 }) => {
-  const quote = customQuote || STATE_MESSAGES[state];
+  const quote = customQuote || STATE_MESSAGES[state] || STATE_MESSAGES.idle;
 
   return (
     <div className={`relative inline-flex flex-col items-center select-none ${className}`}>
       {/* Speech Bubble */}
       {showSpeechBubble && (
         <div
-          className={`mb-3 px-3.5 py-1.5 rounded-lg brutal-border brutal-shadow-sm font-mono text-xs font-black tracking-tight relative flex items-center gap-1.5 z-10 transition-all ${
+          className={`mb-3 px-3.5 py-1.5 rounded-xl brutal-border brutal-shadow-sm font-mono text-xs font-black tracking-tight relative flex items-center gap-1.5 z-10 transition-all ${
             state === 'failure'
               ? 'bg-red-50 text-red-900 border-red-900'
+              : state === 'confused'
+              ? 'bg-amber-50 text-amber-950 border-amber-900'
+              : state === 'debugging'
+              ? 'bg-blue-50 text-blue-950 border-blue-900'
               : state === 'success'
               ? 'bg-emerald-50 text-emerald-950 border-emerald-900'
               : state === 'winner'
@@ -64,6 +72,10 @@ export const CodeMascot: React.FC<CodeMascotProps> = ({
             className={`absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] ${
               state === 'failure'
                 ? 'border-t-red-900'
+                : state === 'confused'
+                ? 'border-t-amber-900'
+                : state === 'debugging'
+                ? 'border-t-blue-900'
                 : state === 'success'
                 ? 'border-t-emerald-900'
                 : 'border-t-[#171717]'
@@ -102,7 +114,17 @@ export const CodeMascot: React.FC<CodeMascotProps> = ({
         {/* Hoodie / Torso */}
         <path
           d="M60 210C60 168 82 148 120 148C158 148 180 168 180 210"
-          fill={state === 'failure' ? '#4B5563' : state === 'winner' ? '#171717' : '#3155FF'}
+          fill={
+            state === 'failure'
+              ? '#4B5563'
+              : state === 'winner'
+              ? '#171717'
+              : state === 'debugging'
+              ? '#0284C7'
+              : state === 'confused'
+              ? '#D97706'
+              : '#3155FF'
+          }
           stroke="#171717"
           strokeWidth="5"
           strokeLinejoin="round"
@@ -132,7 +154,7 @@ export const CodeMascot: React.FC<CodeMascotProps> = ({
         <rect x="127" y="75" width="28" height="24" rx="6" fill="#FFFFFF" stroke="#171717" strokeWidth="4" />
         <line x1="113" y1="87" x2="127" y2="87" stroke="#171717" strokeWidth="4" />
 
-        {/* State-specific Eyes */}
+        {/* State-specific Eyes & Expressions */}
         {state === 'typing' && (
           <>
             <circle cx="99" cy="87" r="4" fill="#171717" />
@@ -144,17 +166,39 @@ export const CodeMascot: React.FC<CodeMascotProps> = ({
 
         {state === 'thinking' && (
           <>
-            {/* Looking upward in thought */}
             <circle cx="99" cy="82" r="4" fill="#171717" />
             <circle cx="141" cy="82" r="4" fill="#171717" />
-            {/* Hand on chin */}
             <circle cx="150" cy="125" r="14" fill="#FDE68A" stroke="#171717" strokeWidth="4" />
+          </>
+        )}
+
+        {state === 'confused' && (
+          <>
+            {/* Tilted eyes & swirl marks */}
+            <circle cx="97" cy="85" r="4" fill="#171717" />
+            <circle cx="139" cy="89" r="4" fill="#171717" />
+            <path d="M88 71C94 67 104 69 108 73" stroke="#171717" strokeWidth="3" strokeLinecap="round" />
+            <path d="M126 73C130 77 140 79 146 75" stroke="#171717" strokeWidth="3" strokeLinecap="round" />
+            {/* Floating question mark */}
+            <text x="165" y="75" fontSize="20" fontWeight="bold" fill="#FF6B35">?</text>
+          </>
+        )}
+
+        {state === 'debugging' && (
+          <>
+            {/* Focused squint */}
+            <path d="M92 87L106 87" stroke="#171717" strokeWidth="4" strokeLinecap="round" />
+            <path d="M134 87L148 87" stroke="#171717" strokeWidth="4" strokeLinecap="round" />
+            {/* Magnifying glass overlay */}
+            <g transform="translate(140, 65)">
+              <circle cx="12" cy="12" r="9" fill="#93C5FD" fillOpacity="0.4" stroke="#171717" strokeWidth="3" />
+              <line x1="18" y1="18" x2="26" y2="26" stroke="#171717" strokeWidth="4" strokeLinecap="round" />
+            </g>
           </>
         )}
 
         {state === 'failure' && (
           <>
-            {/* X Eyes for bug/error */}
             <path d="M94 82L104 92M104 82L94 92" stroke="#DC2626" strokeWidth="4" strokeLinecap="round" />
             <path d="M136 82L146 92M146 82L136 92" stroke="#DC2626" strokeWidth="4" strokeLinecap="round" />
           </>
@@ -162,7 +206,6 @@ export const CodeMascot: React.FC<CodeMascotProps> = ({
 
         {state === 'success' && (
           <>
-            {/* Green happy checkmarks */}
             <path d="M92 86L99 92L106 82" stroke="#059669" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
             <path d="M134 86L141 92L148 82" stroke="#059669" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
           </>
@@ -172,7 +215,6 @@ export const CodeMascot: React.FC<CodeMascotProps> = ({
           <>
             <path d="M92 88C94 80 104 80 106 88" stroke="#171717" strokeWidth="4" strokeLinecap="round" />
             <path d="M134 88C136 80 146 80 148 88" stroke="#171717" strokeWidth="4" strokeLinecap="round" />
-            {/* Golden Crown */}
             {state === 'winner' ? (
               <path
                 d="M90 45L105 24L120 40L135 24L150 45Z"
@@ -197,7 +239,6 @@ export const CodeMascot: React.FC<CodeMascotProps> = ({
           <>
             <circle cx="99" cy="87" r="4" fill="#171717" />
             <circle cx="141" cy="87" r="4" fill="#171717" />
-            {/* Tired under-eye shadow */}
             <path d="M92 95C98 97 102 96 106 94" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" />
             <path d="M134 95C140 97 144 96 148 94" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" />
           </>
@@ -213,6 +254,10 @@ export const CodeMascot: React.FC<CodeMascotProps> = ({
         {/* Mouth Expressions */}
         {state === 'failure' ? (
           <path d="M110 118C115 112 125 112 130 118" stroke="#171717" strokeWidth="4" strokeLinecap="round" />
+        ) : state === 'confused' ? (
+          <path d="M110 116C115 112 125 118 130 114" stroke="#171717" strokeWidth="3" strokeLinecap="round" />
+        ) : state === 'debugging' ? (
+          <line x1="112" y1="115" x2="128" y2="115" stroke="#171717" strokeWidth="3" strokeLinecap="round" />
         ) : state === 'success' || state === 'celebrating' || state === 'winner' ? (
           <path d="M108 112C112 122 128 122 132 112" stroke="#171717" strokeWidth="4" strokeLinecap="round" fill="#EF4444" />
         ) : state === 'thinking' ? (
@@ -234,7 +279,15 @@ export const CodeMascot: React.FC<CodeMascotProps> = ({
           <rect x="80" y="130" width="80" height="45" rx="4" fill="#171717" stroke="#171717" strokeWidth="4" />
 
           {/* Lines of code */}
-          <line x1="88" y1="140" x2="115" y2="140" stroke={state === 'failure' ? '#EF4444' : '#B8E63E'} strokeWidth="3" strokeLinecap="round" />
+          <line
+            x1="88"
+            y1="140"
+            x2="115"
+            y2="140"
+            stroke={state === 'failure' ? '#EF4444' : state === 'debugging' ? '#38BDF8' : '#B8E63E'}
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
           <line x1="88" y1="148" x2="145" y2="148" stroke="#3155FF" strokeWidth="3" strokeLinecap="round" />
           <line x1="95" y1="156" x2="135" y2="156" stroke="#FF6B35" strokeWidth="3" strokeLinecap="round" />
           <line x1="88" y1="164" x2="105" y2="164" stroke="#FFD84D" strokeWidth="3" strokeLinecap="round" />

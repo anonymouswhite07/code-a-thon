@@ -28,6 +28,9 @@ public class CompetitionEngineService {
     }
 
     public long getAuthoritativeRemainingSeconds(Round round) {
+        if ("PAUSED".equals(round.getStatus())) {
+            return round.getRemainingSecondsWhenPaused() != null ? round.getRemainingSecondsWhenPaused() : 0L;
+        }
         if (!"LIVE".equals(round.getStatus())) {
             return 0L;
         }
@@ -62,6 +65,7 @@ public class CompetitionEngineService {
         round.setEndTime(end);
         round.setDurationMinutes(duration);
         round.setIsLocked(false);
+        round.setRemainingSecondsWhenPaused(null);
         Round saved = roundRepository.save(round);
 
         auditService.log(adminEmail, "ROUND_STARTED", "Round " + round.getRoundNumber(),
@@ -83,6 +87,8 @@ public class CompetitionEngineService {
         Round round = roundRepository.findById(roundId)
                 .orElseThrow(() -> new IllegalArgumentException("Round not found: " + roundId));
 
+        long remaining = getAuthoritativeRemainingSeconds(round);
+        round.setRemainingSecondsWhenPaused(remaining);
         round.setStatus("PAUSED");
         Round saved = roundRepository.save(round);
 
@@ -92,7 +98,8 @@ public class CompetitionEngineService {
         realtimeEventService.broadcast("ROUND_PAUSED", Map.of(
                 "roundId", saved.getId(),
                 "roundNumber", saved.getRoundNumber(),
-                "title", saved.getTitle()
+                "title", saved.getTitle(),
+                "remainingSeconds", remaining
         ));
 
         return saved;
@@ -104,10 +111,13 @@ public class CompetitionEngineService {
                 .orElseThrow(() -> new IllegalArgumentException("Round not found: " + roundId));
 
         LocalDateTime now = LocalDateTime.now();
+        long remaining = (round.getRemainingSecondsWhenPaused() != null && round.getRemainingSecondsWhenPaused() > 0)
+                ? round.getRemainingSecondsWhenPaused()
+                : ((long) round.getDurationMinutes() * 60);
+
         round.setStatus("LIVE");
-        if (round.getEndTime() == null || now.isAfter(round.getEndTime())) {
-            round.setEndTime(now.plusMinutes(round.getDurationMinutes()));
-        }
+        round.setEndTime(now.plusSeconds(remaining));
+        round.setRemainingSecondsWhenPaused(null);
         Round saved = roundRepository.save(round);
 
         auditService.log(adminEmail, "ROUND_RESUMED", "Round " + round.getRoundNumber(),
@@ -117,7 +127,7 @@ public class CompetitionEngineService {
                 "roundId", saved.getId(),
                 "roundNumber", saved.getRoundNumber(),
                 "title", saved.getTitle(),
-                "remainingSeconds", getAuthoritativeRemainingSeconds(saved)
+                "remainingSeconds", remaining
         ));
 
         return saved;

@@ -42,7 +42,25 @@ public class LeaderboardService {
                 .orElse(false);
     }
 
+    private final Object freezeLock = new Object();
+    private volatile List<LeaderboardEntryResponse> cachedFrozenLeaderboard = null;
+
     public List<LeaderboardEntryResponse> getLeaderboard() {
+        if (isLeaderboardFrozen() && !isFinalResultsPublished()) {
+            if (cachedFrozenLeaderboard != null) {
+                return cachedFrozenLeaderboard;
+            }
+            synchronized (freezeLock) {
+                if (cachedFrozenLeaderboard == null) {
+                    cachedFrozenLeaderboard = computeLeaderboard();
+                }
+                return cachedFrozenLeaderboard;
+            }
+        }
+        return computeLeaderboard();
+    }
+
+    public List<LeaderboardEntryResponse> computeLeaderboard() {
         List<Participant> participants = participantRepository.findByIsSuspendedFalseOrderByTotalScoreDesc();
         List<LeaderboardEntryResponse> entries = new ArrayList<>();
 
@@ -94,6 +112,14 @@ public class LeaderboardService {
         config.setConfigValue(String.valueOf(freeze));
         configRepository.save(config);
 
+        synchronized (freezeLock) {
+            if (freeze) {
+                this.cachedFrozenLeaderboard = computeLeaderboard();
+            } else {
+                this.cachedFrozenLeaderboard = null;
+            }
+        }
+
         auditService.log(adminEmail, freeze ? "LEADERBOARD_FROZEN" : "LEADERBOARD_UNFROZEN",
                 "Leaderboard", freeze ? "Leaderboard frozen by admin" : "Leaderboard unfrozen by admin", "127.0.0.1");
 
@@ -106,6 +132,12 @@ public class LeaderboardService {
                 .orElse(new CompetitionConfig("results.published", "false"));
         config.setConfigValue(String.valueOf(published));
         configRepository.save(config);
+
+        synchronized (freezeLock) {
+            if (published) {
+                this.cachedFrozenLeaderboard = null;
+            }
+        }
 
         auditService.log(adminEmail, published ? "FINAL_RESULTS_PUBLISHED" : "FINAL_RESULTS_UNPUBLISHED",
                 "Competition", published ? "Final winners announced" : "Final results hidden", "127.0.0.1");

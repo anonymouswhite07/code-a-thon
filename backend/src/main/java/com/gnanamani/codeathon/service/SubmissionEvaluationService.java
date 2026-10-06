@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -65,6 +66,23 @@ public class SubmissionEvaluationService {
         Round round = question.getRound();
         if (!competitionEngineService.isSubmissionAllowed(round)) {
             throw new IllegalStateException("Submissions are not currently allowed for Round " + round.getRoundNumber() + " (Status: " + round.getStatus() + ")");
+        }
+
+        // Anti-abuse: Cooldown & deduplication
+        Optional<Submission> lastSubOpt = submissionRepository.findFirstByParticipantOrderBySubmissionTimeDesc(participant);
+        if (lastSubOpt.isPresent()) {
+            Submission lastSub = lastSubOpt.get();
+            if (lastSub.getSubmissionTime() != null) {
+                long secondsSinceLast = Math.abs(Duration.between(lastSub.getSubmissionTime(), LocalDateTime.now()).getSeconds());
+                if (secondsSinceLast < 5) {
+                    throw new IllegalStateException("Submission cooldown in effect. Please wait " + (5 - secondsSinceLast) + "s before submitting again.");
+                }
+                if (secondsSinceLast < 30 &&
+                        question.getId().equals(lastSub.getQuestion().getId()) &&
+                        request.getSourceCode().trim().equals(lastSub.getSourceCode().trim())) {
+                    throw new IllegalStateException("Duplicate submission detected. Please modify your code before resubmitting.");
+                }
+            }
         }
 
         List<TestCase> testCases = testCaseRepository.findByQuestionOrderByOrderIndexAsc(question);

@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Zap, RefreshCw } from 'lucide-react';
+import { ArrowRight, RefreshCw } from 'lucide-react';
 import { CodeMascot } from '@/components/mascot/CodeMascot';
+import { AlgorithmicSnakeIcon, LogicBoltIcon } from '@/components/icons/CustomIcons';
 
 interface ChapterRound2Props {
   roundData?: {
@@ -63,7 +64,7 @@ export const ChapterRound2: React.FC<ChapterRound2Props> = ({ roundData }) => {
           <div className="lg:col-span-7 bg-[#171717] text-white p-6 sm:p-8 rounded-3xl brutal-border brutal-shadow-xl font-mono text-xs sm:text-sm flex flex-col justify-between">
             <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
               <span className="text-xs font-bold text-[#FFD84D] uppercase flex items-center gap-2">
-                <Zap className="w-4 h-4 text-[#FFD84D]" />
+                <LogicBoltIcon size={18} />
                 Metamorphosis: C &rarr; Python
               </span>
               <button
@@ -127,23 +128,15 @@ export const ChapterRound2: React.FC<ChapterRound2Props> = ({ roundData }) => {
                 )}
               </div>
 
-              {/* Refined Vector Editorial Snake (minimalist geometric art) */}
-              <div className="py-2 flex items-center justify-center">
-                <svg width="180" height="70" viewBox="0 0 180 70" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M10 45 C 30 10, 50 10, 70 45 C 90 80, 110 80, 130 45 C 145 20, 160 25, 170 35"
-                    stroke="#FF6B35"
-                    strokeWidth="10"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  {/* Eyes & Tongue */}
-                  <circle cx="168" cy="32" r="2.5" fill="#171717" />
-                  <path d="M174 37 L182 37 M182 37 L185 34 M182 37 L185 40" stroke="#FF6B35" strokeWidth="2" strokeLinecap="round" />
-                  {/* Geometric accents */}
-                  <circle cx="70" cy="45" r="3" fill="#B8E63E" />
-                  <circle cx="130" cy="45" r="3" fill="#3155FF" />
-                </svg>
+              {/* Bespoke Geometric Python Icon Badge */}
+              <div className="py-3 flex items-center justify-center">
+                <div className="p-4 bg-[#FFD84D]/20 rounded-2xl brutal-border brutal-shadow-sm flex items-center gap-3">
+                  <AlgorithmicSnakeIcon size={48} />
+                  <div className="text-left font-mono">
+                    <span className="text-xs font-black text-[#171717] block">PYTHONIC OPTIMIZATION</span>
+                    <span className="text-[10px] text-gray-600">Zero overhead recursion &amp; DP</span>
+                  </div>
+                </div>
               </div>
 
               <h4 className="text-2xl font-black text-[#171717]">

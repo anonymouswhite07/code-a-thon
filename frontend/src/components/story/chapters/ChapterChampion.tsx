@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Trophy, ArrowDown, Sparkles } from 'lucide-react';
+import { ArrowDown, Sparkles } from 'lucide-react';
 import { CodeMascot } from '@/components/mascot/CodeMascot';
+import { ChampionshipCupIcon } from '@/components/icons/CustomIcons';
+import { LottieAccent } from '@/components/lottie/LottieAccent';
 import { API_BASE } from '@/lib/api';
 
 interface LeaderboardEntry {
@@ -53,12 +55,17 @@ export const ChapterChampion: React.FC = () => {
   const thirdPlace = entries[2];
 
   return (
-    <section id="champion" className="min-h-screen py-32 px-4 flex flex-col justify-center relative bg-[#F7F4ED] border-t-2 border-[#171717]/10">
-      <div className="max-w-5xl mx-auto w-full space-y-16 text-center">
+    <section id="champion" className="min-h-screen py-32 px-4 flex flex-col justify-center relative bg-[#F7F4ED] border-t-2 border-[#171717]/10 overflow-hidden">
+      {/* Parallax Background Grid */}
+      <div data-speed="0.15" className="parallax-layer absolute inset-0 pointer-events-none opacity-25 bg-dot-pattern" />
+
+      <div className="max-w-5xl mx-auto w-full space-y-16 text-center relative z-10">
         {/* Dramatic Poetic Pause */}
-        <div className="space-y-6 max-w-3xl mx-auto">
-          <p className="font-mono text-sm uppercase tracking-widest text-gray-500 font-bold">
-            Chapter 06 &bull; The Culmination
+        <div data-speed="1.1" className="parallax-layer space-y-6 max-w-3xl mx-auto">
+          <p className="font-mono text-sm uppercase tracking-widest text-gray-500 font-bold flex items-center justify-center gap-2">
+            <LottieAccent type="celebration-spark" size={20} />
+            <span>Chapter 06 &bull; The Culmination</span>
+            <LottieAccent type="celebration-spark" size={20} />
           </p>
 
           <div className="space-y-3 text-lg sm:text-2xl font-black text-gray-400 uppercase tracking-widest font-mono">
@@ -74,15 +81,21 @@ export const ChapterChampion: React.FC = () => {
           </div>
         </div>
 
-        {/* Generous dramatic breathing space before trophy reveal */}
-        <div className="py-6 flex flex-col items-center justify-center">
-          {/* Trophy & Mascot Duo */}
-          <div className="relative inline-block">
-            <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full bg-[#FFD84D]/30 flex items-center justify-center mx-auto brutal-border brutal-shadow-lg animate-pulse">
-              <Trophy className="w-16 h-16 sm:w-20 sm:h-20 text-[#171717] fill-[#FFD84D]" />
+        {/* Generous dramatic breathing space with Trophy & Winner Mascot */}
+        <div data-speed="0.7" className="parallax-layer py-6 flex flex-col items-center justify-center">
+          <div className="relative flex items-center justify-center gap-6">
+            <div className="relative">
+              <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full bg-[#FFD84D]/30 flex items-center justify-center mx-auto brutal-border brutal-shadow-lg animate-pulse">
+                <ChampionshipCupIcon size={76} />
+              </div>
+              <div className="absolute top-0 right-0">
+                <LottieAccent type="trophy-shine" size={32} />
+              </div>
             </div>
-            <div className="absolute -bottom-4 -right-10 hidden sm:block">
-              <CodeMascot state="winner" size={100} showSpeechBubble={false} />
+
+            {/* Winner Mascot Celebration */}
+            <div className="hidden sm:block">
+              <CodeMascot state="winner" size={130} showSpeechBubble={false} />
             </div>
           </div>
         </div>

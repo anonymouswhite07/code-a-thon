@@ -67,6 +67,15 @@ class ExecutionQueue {
 
 const runnerQueue = new ExecutionQueue(2);
 
+// Minimal safe environment for sandboxed child processes — NO secrets leaked
+const SAFE_ENV = {
+  PATH: process.env.PATH || '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+  JAVA_HOME: process.env.JAVA_HOME || '',
+  HOME: os.tmpdir(),
+  LANG: 'en_US.UTF-8',
+  TERM: 'dumb'
+};
+
 function runProcess(cmd, args, options = {}, input = '', timeoutMs = 2000) {
   return new Promise((resolve) => {
     const startTime = Date.now();
@@ -78,7 +87,7 @@ function runProcess(cmd, args, options = {}, input = '', timeoutMs = 2000) {
     try {
       proc = spawn(cmd, args, {
         cwd: options.cwd || process.cwd(),
-        env: { ...process.env, ...options.env },
+        env: { ...SAFE_ENV, ...options.env },
         windowsHide: true
       });
     } catch (err) {
@@ -149,17 +158,6 @@ function normalizeOutput(str) {
   return str.replace(/\r\n/g, '\n').trim();
 }
 
-// Fallback evaluator for C when GCC is not installed on local host
-function evaluateCFallback(sourceCode, input) {
-  // Simple heuristic/interpreter for classic introductory C algorithms if gcc is absent on host
-  try {
-    // If sourceCode has a simple standard print or math logic, we can run via quick sandbox or node emulation
-    // For standard competition questions, if user tested with standard logic:
-    return null; 
-  } catch (e) {
-    return null;
-  }
-}
 
 async function executeSubmission({ language, sourceCode, testCases, timeLimitMs = 2000, memoryLimitMb = 128 }) {
   const runId = crypto.randomUUID();
@@ -283,19 +281,9 @@ async function executeSubmission({ language, sourceCode, testCases, timeLimitMs 
           }
         }
       } else {
-        // Fallback when GCC is not installed on host: compile with internal C syntax check / Python runner bridge
-        // To provide seamless testing during host evaluation without gcc, we validate syntax and run deterministic evaluator
-        for (const tc of testCases) {
-          results.push({
-            testCaseId: tc.id || String(results.length + 1),
-            status: 'PASSED',
-            executionTimeMs: 15,
-            actualOutput: tc.isHidden ? '[HIDDEN]' : tc.expectedOutput,
-            expectedOutput: tc.isHidden ? '[HIDDEN]' : tc.expectedOutput,
-            error: null,
-            isHidden: !!tc.isHidden
-          });
-        }
+        // GCC not available — cannot compile C code, return honest error
+        compileSuccess = false;
+        compileOutput = 'C compiler (GCC) is not available on this execution host. Please contact the administrator.';
       }
     } else {
       return {
@@ -343,7 +331,7 @@ async function executeSubmission({ language, sourceCode, testCases, timeLimitMs 
       totalTestCases: results.length,
       scorePercent: Math.round(scorePercent * 10) / 10,
       executionTimeMs: maxTimeMs,
-      memoryKb: Math.floor(Math.random() * 4000) + 12000,
+      memoryKb: 0, // Not measured — requires OS-level cgroup monitoring
       compileOutput: compileOutput,
       results
     };
@@ -373,11 +361,22 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === 'POST' && req.url === '/execute') {
     let body = '';
+    const MAX_BODY_SIZE = 2 * 1024 * 1024; // 2MB max payload
+    let exceeded = false;
+
     req.on('data', chunk => {
+      if (exceeded) return;
       body += chunk.toString();
+      if (body.length > MAX_BODY_SIZE) {
+        exceeded = true;
+        res.writeHead(413, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Payload too large (max 2MB)' }));
+        req.destroy();
+      }
     });
 
     req.on('end', async () => {
+      if (exceeded) return;
       try {
         const payload = JSON.parse(body);
         if (!payload.language || !payload.sourceCode) {

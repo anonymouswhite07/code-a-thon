@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Sparkles, Heart, Compass } from 'lucide-react';
 import { CodeMascot } from '@/components/mascot/CodeMascot';
+import { GatewayPortalIcon } from '@/components/icons/CustomIcons';
 
 export const ChapterFinale: React.FC = () => {
   return (
@@ -111,14 +112,16 @@ export const ChapterFinale: React.FC = () => {
 
             {/* Mascot standing at the portal doorway */}
             <div className="lg:col-span-4 flex flex-col items-center justify-center p-6 bg-white/5 rounded-2xl border border-white/10">
-              <div className="relative">
-                {/* Visual archway / doorway SVG */}
-                <div className="w-36 h-48 border-4 border-dashed border-[#FFD84D] rounded-t-full flex items-end justify-center pb-2 bg-gradient-to-b from-transparent to-[#FFD84D]/10">
-                  <CodeMascot state="idle" size={110} showSpeechBubble={false} />
+              <div className="relative flex flex-col items-center justify-center">
+                <div className="mb-2">
+                  <GatewayPortalIcon size={44} />
+                </div>
+                <div className="w-36 h-44 border-4 border-dashed border-[#FFD84D] rounded-t-full flex items-end justify-center pb-2 bg-gradient-to-b from-transparent to-[#FFD84D]/10">
+                  <CodeMascot state="celebrating" size={100} showSpeechBubble={false} />
                 </div>
               </div>
               <span className="text-xs font-mono text-[#FFD84D] font-bold mt-4">
-                The gateway is open
+                The gateway is open &bull; Step through
               </span>
             </div>
           </div>

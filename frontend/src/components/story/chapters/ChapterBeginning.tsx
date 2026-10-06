@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowDown, ArrowRight } from 'lucide-react';
 import { CodeMascot } from '@/components/mascot/CodeMascot';
+import { LottieAccent } from '@/components/lottie/LottieAccent';
 
 const TYPED_SNIPPET = `#include <stdio.h>
 
@@ -24,17 +25,23 @@ export const ChapterBeginning: React.FC = () => {
       } else {
         clearInterval(interval);
       }
-    }, 38);
+    }, 36);
 
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <section id="begin" className="min-h-screen pt-28 pb-20 px-4 flex flex-col justify-center relative bg-dot-pattern">
-      <div className="max-w-6xl mx-auto w-full">
+    <section id="begin" className="min-h-screen pt-28 pb-20 px-4 flex flex-col justify-center relative bg-dot-pattern overflow-hidden">
+      {/* Parallax Background Ambient Grid Layer */}
+      <div
+        data-speed="0.15"
+        className="parallax-layer absolute inset-0 pointer-events-none opacity-40 bg-grid-pattern"
+      />
+
+      <div className="max-w-6xl mx-auto w-full relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-          {/* Left Column: Editorial Headline & Story Origin */}
-          <div className="lg:col-span-7 space-y-6 text-center sm:text-left">
+          {/* Left Column: Editorial Headline & Story Origin (Foreground parallax) */}
+          <div data-speed="1.1" className="parallax-layer lg:col-span-7 space-y-6 text-center sm:text-left">
             {/* Poetic Opening Line */}
             <div className="space-y-2">
               <p className="font-mono text-xs sm:text-sm font-bold text-gray-500 uppercase tracking-widest flex items-center justify-center sm:justify-start gap-2">
@@ -45,8 +52,9 @@ export const ChapterBeginning: React.FC = () => {
 
             {/* Dramatic Headline Reveal */}
             <div className="space-y-4">
-              <div className="inline-block px-3.5 py-1 bg-white brutal-border brutal-shadow-sm rounded-full text-xs font-mono font-black uppercase text-[#171717]">
-                Gnanamani College of Technology Presents
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-white brutal-border brutal-shadow-sm rounded-full text-xs font-mono font-black uppercase text-[#171717]">
+                <LottieAccent type="terminal-prompt" size={16} />
+                <span>Gnanamani College of Technology Presents</span>
               </div>
 
               <div className="space-y-1">
@@ -92,13 +100,13 @@ export const ChapterBeginning: React.FC = () => {
           </div>
 
           {/* Right Column: Genesis.c Terminal Box & Mascot Companion */}
-          <div className="lg:col-span-5 flex flex-col items-center lg:items-end space-y-4">
+          <div data-speed="0.7" className="parallax-layer lg:col-span-5 flex flex-col items-center lg:items-end space-y-4">
             {/* Mascot Companion Preview */}
-            <div className="flex items-center gap-3 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-2xl brutal-border brutal-shadow-sm self-center lg:self-end">
+            <div className="flex items-center gap-4 px-4 py-2.5 bg-white/90 backdrop-blur-sm rounded-2xl brutal-border brutal-shadow-sm self-center lg:self-end">
               <CodeMascot state="typing" size={80} showSpeechBubble={false} />
               <div className="text-xs font-mono font-bold text-gray-600 text-left">
                 Meet your companion <br />
-                <span className="text-[#3155FF]">Student Coder &apos;26</span>
+                <span className="text-[#3155FF] font-black">Student Coder &apos;26</span>
               </div>
             </div>
 

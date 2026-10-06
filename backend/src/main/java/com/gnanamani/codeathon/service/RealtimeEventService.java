@@ -19,7 +19,7 @@ public class RealtimeEventService {
     private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
 
     public SseEmitter createEmitter() {
-        SseEmitter emitter = new SseEmitter(180_000L); // 3 minutes timeout
+        SseEmitter emitter = new SseEmitter(3_600_000L); // 1 hour timeout (supports full competition rounds)
         emitters.add(emitter);
 
         emitter.onCompletion(() -> emitters.remove(emitter));

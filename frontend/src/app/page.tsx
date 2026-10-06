@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { StoryNav } from '@/components/story/StoryNav';
-import { StoryProgressIndicator } from '@/components/story/StoryProgressIndicator';
 import { ChapterBeginning } from '@/components/story/chapters/ChapterBeginning';
 import { ChapterQuestion } from '@/components/story/chapters/ChapterQuestion';
 import { ChapterCode } from '@/components/story/chapters/ChapterCode';
@@ -11,12 +12,17 @@ import { ChapterRound2 } from '@/components/story/chapters/ChapterRound2';
 import { ChapterRound3 } from '@/components/story/chapters/ChapterRound3';
 import { ChapterChampion } from '@/components/story/chapters/ChapterChampion';
 import { ChapterFinale } from '@/components/story/chapters/ChapterFinale';
+import { StoryParallaxOrnaments } from '@/components/story/StoryParallaxOrnaments';
 import { InteractivePlaygroundDrawer } from '@/components/story/InteractivePlaygroundDrawer';
 import { RulesModal } from '@/components/story/RulesModal';
 import { ScheduleModal } from '@/components/story/ScheduleModal';
 import { LeaderboardModal } from '@/components/story/LeaderboardModal';
 import { Footer } from '@/components/shared/Footer';
 import { API_BASE } from '@/lib/api';
+
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 interface RoundDto {
   id: number;
@@ -49,6 +55,35 @@ export default function Home() {
       .catch(() => {
         // Fallback gracefully if backend is temporarily offline
       });
+
+    // GSAP ScrollTrigger Multi-Tier Parallax Integration
+    const ctx = gsap.context(() => {
+      // Check prefers-reduced-motion
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReducedMotion) return;
+
+      const layers = document.querySelectorAll<HTMLElement>('.parallax-layer[data-speed]');
+      layers.forEach((layer) => {
+        const speed = parseFloat(layer.getAttribute('data-speed') || '1');
+        // Calculate multi-directional movement based on speed factor
+        const yMovement = (1 - speed) * 140;
+        const rotateMovement = (1 - speed) * 4;
+
+        gsap.to(layer, {
+          y: yMovement,
+          rotation: rotateMovement,
+          ease: 'power1.out',
+          scrollTrigger: {
+            trigger: layer.closest('section') || layer,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 1.5,
+          }
+        });
+      });
+    });
+
+    return () => ctx.revert();
   }, []);
 
   const round1Data = rounds.find((r) => r.roundNumber === 1 || r.language?.toUpperCase() === 'C');
@@ -56,8 +91,11 @@ export default function Home() {
   const round3Data = rounds.find((r) => r.roundNumber === 3 || r.language?.toUpperCase() === 'JAVA');
 
   return (
-    <main className="min-h-screen bg-[#F7F4ED] text-[#171717] flex flex-col selection:bg-[#FFD84D] selection:text-[#171717]">
-      {/* 1. Sticky Storytelling Navigation */}
+    <main className="min-h-screen bg-[#F7F4ED] text-[#171717] flex flex-col selection:bg-[#FFD84D] selection:text-[#171717] relative">
+      {/* 0. Ambient Story Parallax Floating Ornaments & Mouse Drift */}
+      <StoryParallaxOrnaments />
+
+      {/* 1. Sticky Storytelling Navigation with Animated Progress Bar */}
       <StoryNav
         onOpenPlayground={() => setIsPlaygroundOpen(true)}
         onOpenRules={() => setIsRulesOpen(true)}
@@ -65,10 +103,7 @@ export default function Home() {
         onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
       />
 
-      {/* 2. Story Chapter Scroll Tracker (Desktop vertical ribbon & mobile top tracker) */}
-      <StoryProgressIndicator />
-
-      {/* 3. Chapter 01: BEGIN — The Beginning */}
+      {/* 2. Chapter 01: BEGIN — The Beginning */}
       <ChapterBeginning />
 
       {/* 4. Chapter 02: THINK — The Question & First Failure/Success */}

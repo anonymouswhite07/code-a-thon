@@ -2,8 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Coffee, CheckCircle, ArrowRight, Laptop } from 'lucide-react';
+import { CheckCircle, ArrowRight, Laptop } from 'lucide-react';
 import { CodeMascot } from '@/components/mascot/CodeMascot';
+import { SteamingMugIcon } from '@/components/icons/CustomIcons';
 
 interface ChapterRound3Props {
   roundData?: {
@@ -24,13 +25,13 @@ export const ChapterRound3: React.FC<ChapterRound3Props> = ({ roundData }) => {
 
   return (
     <section id="final" className="py-28 px-4 bg-[#111318] text-[#F7F4ED] relative overflow-hidden">
-      {/* Subtle warm amber ambient glow (not neon, not cyberpunk) */}
-      <div className="absolute -top-40 right-10 w-96 h-96 bg-[#FF6B35]/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-40 left-10 w-96 h-96 bg-[#FFD84D]/10 rounded-full blur-3xl pointer-events-none" />
+      {/* Parallax background ambient glow */}
+      <div data-speed="0.15" className="parallax-layer absolute -top-40 right-10 w-96 h-96 bg-[#FF6B35]/10 rounded-full blur-3xl pointer-events-none" />
+      <div data-speed="0.15" className="parallax-layer absolute -bottom-40 left-10 w-96 h-96 bg-[#FFD84D]/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-5xl mx-auto w-full space-y-12 relative z-10">
         {/* Chapter Header */}
-        <div className="space-y-3">
+        <div data-speed="1.1" className="parallax-layer space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <span className="px-3.5 py-1 bg-[#FF6B35] text-white font-mono text-xs font-black uppercase rounded-md">
@@ -42,7 +43,7 @@ export const ChapterRound3: React.FC<ChapterRound3Props> = ({ roundData }) => {
             </div>
 
             <div className="flex items-center gap-2 text-xs font-mono text-gray-400">
-              <Coffee className="w-4 h-4 text-[#FF6B35]" />
+              <SteamingMugIcon size={18} />
               <span>Midnight Grind &bull; Final Sprint</span>
             </div>
           </div>
@@ -62,8 +63,8 @@ export const ChapterRound3: React.FC<ChapterRound3Props> = ({ roundData }) => {
 
         {/* Cinematic Late Night Desk Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-          {/* Desk Scene & Mascot Card */}
-          <div className="lg:col-span-6 bg-[#1A1D24] p-6 sm:p-8 rounded-3xl border border-white/10 flex flex-col justify-between relative">
+          {/* Desk Scene & Mascot Card with 3D Coffee Mug */}
+          <div data-speed="0.7" className="parallax-layer lg:col-span-6 bg-[#1A1D24] p-6 sm:p-8 rounded-3xl border border-white/10 flex flex-col justify-between relative">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -76,7 +77,7 @@ export const ChapterRound3: React.FC<ChapterRound3Props> = ({ roundData }) => {
               <div className="p-4 bg-[#FFD84D] text-[#171717] rounded-xl font-mono text-xs transform -rotate-1 shadow-md font-bold space-y-1">
                 <div className="flex items-center justify-between border-b border-[#171717]/20 pb-1">
                   <span>STICKY NOTE #42</span>
-                  <Coffee className="w-3.5 h-3.5" />
+                  <SteamingMugIcon size={16} />
                 </div>
                 <p className="italic pt-1">&ldquo;One more test case... just check null pointers and edge cases at n = 10^5.&rdquo;</p>
               </div>

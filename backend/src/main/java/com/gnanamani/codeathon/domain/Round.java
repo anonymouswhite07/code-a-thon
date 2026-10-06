@@ -38,6 +38,8 @@ public class Round {
     @Column(nullable = false)
     private Boolean isLocked = true;
 
+    private Long remainingSecondsWhenPaused;
+
     public Round() {}
 
     public Round(Integer roundNumber, String title, String subtitle, String language, String description, Integer durationMinutes) {
@@ -83,4 +85,7 @@ public class Round {
 
     public Boolean getIsLocked() { return isLocked; }
     public void setIsLocked(Boolean isLocked) { this.isLocked = isLocked; }
+
+    public Long getRemainingSecondsWhenPaused() { return remainingSecondsWhenPaused; }
+    public void setRemainingSecondsWhenPaused(Long remainingSecondsWhenPaused) { this.remainingSecondsWhenPaused = remainingSecondsWhenPaused; }
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -35,8 +35,14 @@ export default function CompeteArenaPage() {
   const [questions, setQuestions] = useState<any[]>([]);
   const [activeQuestion, setActiveQuestion] = useState<any>(null);
   const [code, setCode] = useState<string>('');
+  const [codeDrafts, setCodeDrafts] = useState<Record<number, string>>({});
   const [customInput, setCustomInput] = useState<string>('');
   const [remainingSeconds, setRemainingSeconds] = useState<number>(0);
+
+  const activeQuestionRef = useRef<any>(null);
+  const codeRef = useRef<string>('');
+  const codeDraftsRef = useRef<Record<number, string>>({});
+  const inputDraftsRef = useRef<Record<number, string>>({});
 
   const [running, setRunning] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
@@ -47,6 +53,141 @@ export default function CompeteArenaPage() {
   const [questionSubmissions, setQuestionSubmissions] = useState<any[]>([]);
   const [copied, setCopied] = useState<boolean>(false);
   const [isMobileQuestionOpen, setIsMobileQuestionOpen] = useState<boolean>(false);
+
+  const getDraftKey = useCallback(
+    (qId: number | string) => `codeathon_draft_${roundId}_${qId}`,
+    [roundId]
+  );
+  const getInputKey = useCallback(
+    (qId: number | string) => `codeathon_input_${roundId}_${qId}`,
+    [roundId]
+  );
+
+  const saveCurrentDraft = useCallback(() => {
+    if (activeQuestionRef.current?.id) {
+      const curId = activeQuestionRef.current.id;
+      const curCode = codeRef.current;
+      codeDraftsRef.current[curId] = curCode;
+      try {
+        localStorage.setItem(getDraftKey(curId), curCode);
+      } catch (e) {}
+    }
+  }, [getDraftKey]);
+
+  const fetchSubmissionsForQuestion = (qId: number) => {
+    api.submissions.getMySubmissionsForQuestion(qId)
+      .then((subs: any[]) => setQuestionSubmissions(subs || []))
+      .catch(() => {});
+  };
+
+  const loadQuestionDetail = useCallback(
+    (qId: number) => {
+      // 1. Persist current draft before switching tabs
+      saveCurrentDraft();
+
+      api.questions.getDetail(qId)
+        .then((detail: any) => {
+          setActiveQuestion(detail);
+          activeQuestionRef.current = detail;
+
+          // 2. Resolve code: check memory cache -> check localStorage -> fallback to starterCode
+          let resolvedCode = codeDraftsRef.current[qId];
+          if (resolvedCode === undefined && typeof window !== 'undefined') {
+            try {
+              const saved = localStorage.getItem(getDraftKey(qId));
+              if (saved !== null) {
+                resolvedCode = saved;
+              }
+            } catch (e) {}
+          }
+
+          if (resolvedCode === undefined) {
+            resolvedCode = detail.starterCode || '';
+          }
+
+          setCode(resolvedCode);
+          codeRef.current = resolvedCode;
+          codeDraftsRef.current[qId] = resolvedCode;
+          setCodeDrafts(prev => ({ ...prev, [qId]: resolvedCode }));
+
+          // 3. Resolve custom input: check memory -> check localStorage -> sample test case
+          let resolvedInput = inputDraftsRef.current[qId];
+          if (resolvedInput === undefined && typeof window !== 'undefined') {
+            try {
+              const savedInput = localStorage.getItem(getInputKey(qId));
+              if (savedInput !== null) {
+                resolvedInput = savedInput;
+              }
+            } catch (e) {}
+          }
+
+          if (resolvedInput === undefined) {
+            resolvedInput = detail.sampleTestCases?.[0]?.inputData || '';
+          }
+
+          setCustomInput(resolvedInput);
+          inputDraftsRef.current[qId] = resolvedInput;
+
+          // Clear execution logs for clean view on question switch
+          setConsoleOutput('');
+          setTestResults([]);
+          setOverallStatus(null);
+
+          fetchSubmissionsForQuestion(qId);
+        })
+        .catch(() => {});
+    },
+    [getDraftKey, getInputKey, saveCurrentDraft]
+  );
+
+  const handleCodeChange = (newVal: string) => {
+    setCode(newVal);
+    codeRef.current = newVal;
+    if (activeQuestionRef.current?.id) {
+      const qId = activeQuestionRef.current.id;
+      codeDraftsRef.current[qId] = newVal;
+      setCodeDrafts(prev => ({ ...prev, [qId]: newVal }));
+      try {
+        localStorage.setItem(getDraftKey(qId), newVal);
+      } catch (e) {}
+    }
+  };
+
+  const handleCustomInputChange = (newVal: string) => {
+    setCustomInput(newVal);
+    if (activeQuestionRef.current?.id) {
+      const qId = activeQuestionRef.current.id;
+      inputDraftsRef.current[qId] = newVal;
+      try {
+        localStorage.setItem(getInputKey(qId), newVal);
+      } catch (e) {}
+    }
+  };
+
+  const handleResetTemplate = () => {
+    if (!activeQuestion) return;
+    const qId = activeQuestion.id;
+    const starter = activeQuestion.starterCode || '';
+    setCode(starter);
+    codeRef.current = starter;
+    codeDraftsRef.current[qId] = starter;
+    setCodeDrafts(prev => ({ ...prev, [qId]: starter }));
+    try {
+      localStorage.removeItem(getDraftKey(qId));
+    } catch (e) {}
+  };
+
+  // Ensure drafts are flushed on window close / navigation
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      saveCurrentDraft();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      saveCurrentDraft();
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [saveCurrentDraft]);
 
   // Load round & questions
   useEffect(() => {
@@ -96,26 +237,7 @@ export default function CompeteArenaPage() {
       unsubscribe();
       clearInterval(timer);
     };
-  }, [roundId, router]);
-
-  const loadQuestionDetail = (qId: number) => {
-    api.questions.getDetail(qId)
-      .then((detail: any) => {
-        setActiveQuestion(detail);
-        setCode(detail.starterCode || '');
-        if (detail.sampleTestCases?.length > 0) {
-          setCustomInput(detail.sampleTestCases[0].inputData || '');
-        }
-        fetchSubmissionsForQuestion(qId);
-      })
-      .catch(() => {});
-  };
-
-  const fetchSubmissionsForQuestion = (qId: number) => {
-    api.submissions.getMySubmissionsForQuestion(qId)
-      .then((subs: any[]) => setQuestionSubmissions(subs || []))
-      .catch(() => {});
-  };
+  }, [roundId, router, loadQuestionDetail]);
 
   const formatSec = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -239,19 +361,35 @@ export default function CompeteArenaPage() {
         <div className="lg:col-span-5 flex flex-col bg-white border-r-2 border-[#171717] overflow-hidden">
           {/* Question Tabs Bar */}
           <div className="bg-[#F7F4ED] px-4 py-2 border-b-2 border-[#171717] flex items-center gap-2 overflow-x-auto shrink-0">
-            {questions.map((q, idx) => (
-              <button
-                key={q.id}
-                onClick={() => loadQuestionDetail(q.id)}
-                className={`px-3 py-1.5 rounded text-xs font-mono font-bold whitespace-nowrap transition-all ${
-                  activeQuestion?.id === q.id
-                    ? 'bg-[#171717] text-white brutal-border brutal-shadow-sm'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 brutal-border'
-                }`}
-              >
-                Q{idx + 1}. {q.title.slice(0, 16)}... ({q.points}p)
-              </button>
-            ))}
+            {questions.map((q, idx) => {
+              const isCurrent = activeQuestion?.id === q.id;
+              const draft = codeDrafts[q.id];
+              const hasDraft = Boolean(
+                draft &&
+                draft !== q.starterCode &&
+                draft.trim().length > 0
+              );
+              return (
+                <button
+                  key={q.id}
+                  onClick={() => {
+                    if (activeQuestion?.id !== q.id) {
+                      loadQuestionDetail(q.id);
+                    }
+                  }}
+                  className={`px-3 py-1.5 rounded text-xs font-mono font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                    isCurrent
+                      ? 'bg-[#171717] text-white brutal-border brutal-shadow-sm'
+                      : 'bg-white text-gray-700 hover:bg-gray-100 brutal-border'
+                  }`}
+                >
+                  <span>Q{idx + 1}. {q.title.slice(0, 16)}... ({q.points}p)</span>
+                  {hasDraft && !isCurrent && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#B8E63E]" title="Draft saved" />
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           {/* Question Markdown & Problem Statement Scrollable Area */}
@@ -362,7 +500,7 @@ export default function CompeteArenaPage() {
               </span>
             </div>
             <button
-              onClick={() => setCode(activeQuestion?.starterCode || '')}
+              onClick={handleResetTemplate}
               className="hover:text-white flex items-center gap-1 transition-colors"
             >
               <RotateCcw className="w-3 h-3" /> Reset Template
@@ -377,7 +515,7 @@ export default function CompeteArenaPage() {
                 round?.language === 'C' ? 'c' : round?.language === 'PYTHON' ? 'python' : 'java'
               }
               value={code}
-              onChange={(val) => setCode(val || '')}
+              onChange={(val) => handleCodeChange(val || '')}
               theme="vs-dark"
               options={{
                 fontSize: 14,
@@ -438,7 +576,7 @@ export default function CompeteArenaPage() {
                   </div>
                   <textarea
                     value={customInput}
-                    onChange={(e) => setCustomInput(e.target.value)}
+                    onChange={(e) => handleCustomInputChange(e.target.value)}
                     className="flex-1 bg-[#1e1e1e] p-2 text-xs font-mono text-gray-200 rounded border border-white/10 focus:outline-none focus:border-[#3155FF] resize-none"
                     placeholder="Provide test input here..."
                   />
