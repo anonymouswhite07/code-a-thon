@@ -62,12 +62,45 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
     headers
   });
 
-  const json = await res.json().catch(() => ({ success: false, error: { message: 'Failed to parse response' } }));
-  if (!res.ok || !json.success) {
-    throw new Error(json.error?.message || `Request failed with status ${res.status}`);
+  const text = await res.text();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let json: any = null;
+  if (text && text.trim().length > 0) {
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
   }
 
-  return json.data;
+  if (!res.ok) {
+    if (res.status === 401) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('codeathon_token');
+        localStorage.removeItem('codeathon_user');
+      }
+      throw new Error(json?.error?.message || 'Your session has expired. Please log in again.');
+    }
+    if (res.status === 403) {
+      const errMsg = json?.error?.message || json?.message || '';
+      if (json?.error?.code === 'ACCOUNT_SUSPENDED' || errMsg.toLowerCase().includes('suspended')) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('codeathon_token');
+          localStorage.removeItem('codeathon_user');
+          window.location.href = '/login?suspended=true';
+        }
+        throw new Error(errMsg || 'Your account has been suspended. Please contact the administrator to make your account active.');
+      }
+      throw new Error(errMsg || 'Access denied. You do not have permission for this action.');
+    }
+    throw new Error(json?.error?.message || json?.message || `Request failed with status ${res.status}`);
+  }
+
+  if (json && json.success === false) {
+    throw new Error(json.error?.message || 'Operation failed');
+  }
+
+  return json ? json.data : null;
 }
 
 export const api = {
@@ -128,6 +161,21 @@ export const api = {
     getByRound: (roundId: number | string) => fetchWithAuth(`/announcements/round/${roundId}`)
   },
 
+  integrity: {
+    startSession: (payload: { roundId: number; agreementAccepted: boolean }) =>
+      fetchWithAuth('/integrity/session/start', { method: 'POST', body: JSON.stringify(payload) }),
+    getSessionStatus: (roundId: number | string) =>
+      fetchWithAuth(`/integrity/session/status?roundId=${roundId}`),
+    recordEvent: (payload: { sessionToken: string; roundId: number; questionId?: number; eventType: string; eventContext?: string }) =>
+      fetchWithAuth('/integrity/event', { method: 'POST', body: JSON.stringify(payload) }),
+    tabSwitchSubmit: (payload: { sessionToken: string; roundId: number; questionId: number; language: string; sourceCode: string; idempotencyKey: string }) =>
+      fetchWithAuth('/integrity/tab-switch-submit', { method: 'POST', body: JSON.stringify(payload) }),
+    fullscreenExitTerminate: (payload: { sessionToken: string; roundId: number; questionId: number; language: string; sourceCode: string }) =>
+      fetchWithAuth('/integrity/session/fullscreen-exit-terminate', { method: 'POST', body: JSON.stringify(payload) }),
+    advanceQuestion: (payload: { roundId: number; currentQuestionId: number; nextQuestionId: number }) =>
+      fetchWithAuth('/integrity/question/advance', { method: 'POST', body: JSON.stringify(payload) })
+  },
+
   admin: {
     getStats: () => fetchWithAuth('/admin/stats'),
     controlRound: (id: number, action: string, durationMinutes?: number) =>
@@ -136,13 +184,26 @@ export const api = {
       fetchWithAuth(`/admin/rounds/${id}/lock?locked=${locked}`, { method: 'POST' }),
     getAllQuestions: () => fetchWithAuth('/admin/questions'),
     createQuestion: (data: Record<string, unknown>) => fetchWithAuth('/admin/questions', { method: 'POST', body: JSON.stringify(data) }),
+    updateQuestion: (id: number, data: Record<string, unknown>) => fetchWithAuth(`/admin/questions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     deleteQuestion: (id: number) => fetchWithAuth(`/admin/questions/${id}`, { method: 'DELETE' }),
     getParticipants: (search?: string) => fetchWithAuth(`/admin/participants${search ? `?search=${encodeURIComponent(search)}` : ''}`),
     toggleSuspend: (id: number) => fetchWithAuth(`/admin/participants/${id}/suspend`, { method: 'POST' }),
     createAnnouncement: (data: Record<string, unknown>) => fetchWithAuth('/admin/announcements', { method: 'POST', body: JSON.stringify(data) }),
     toggleFreeze: (freeze: boolean) => fetchWithAuth(`/admin/leaderboard/freeze?freeze=${freeze}`, { method: 'POST' }),
     publishFinal: (publish: boolean) => fetchWithAuth(`/admin/leaderboard/publish-final?publish=${publish}`, { method: 'POST' }),
-    getAuditLogs: () => fetchWithAuth('/admin/audit-logs')
+    getAuditLogs: () => fetchWithAuth('/admin/audit-logs'),
+    getIntegritySessions: (roundId?: number) =>
+      fetchWithAuth(`/admin/integrity/sessions${roundId ? `?roundId=${roundId}` : ''}`),
+    resetIntegritySession: (sessionId: number) =>
+      fetchWithAuth(`/admin/integrity/sessions/${sessionId}/reset`, { method: 'POST' }),
+    resetParticipantRound: (participantId: number, roundId: number) =>
+      fetchWithAuth(`/admin/integrity/participants/${participantId}/rounds/${roundId}/reset`, { method: 'POST' }),
+    getIntegrityEvents: (roundId?: number, participantId?: number) => {
+      let query = '';
+      if (roundId) query += `roundId=${roundId}&`;
+      if (participantId) query += `participantId=${participantId}`;
+      return fetchWithAuth(`/admin/integrity/events${query ? `?${query}` : ''}`);
+    }
   },
 
   judge: {
@@ -152,7 +213,13 @@ export const api = {
       if (status) query += `status=${encodeURIComponent(status)}`;
       return fetchWithAuth(`/judge/submissions${query ? `?${query}` : ''}`);
     },
-    getDetail: (id: number) => fetchWithAuth(`/judge/submissions/${id}`)
+    getDetail: (id: number) => fetchWithAuth(`/judge/submissions/${id}`),
+    getIntegrityEvents: (roundId?: number, participantId?: number) => {
+      let query = '';
+      if (roundId) query += `roundId=${roundId}&`;
+      if (participantId) query += `participantId=${participantId}`;
+      return fetchWithAuth(`/judge/integrity/events${query ? `?${query}` : ''}`);
+    }
   }
 };
 
@@ -171,7 +238,8 @@ export function subscribeToEvents(onEvent: (event: string, data: any) => void) {
     'ANNOUNCEMENT_CREATED',
     'SUBMISSION_COMPLETED',
     'COMPETITION_STATUS_CHANGED',
-    'LEADERBOARD_STATUS_CHANGED'
+    'LEADERBOARD_STATUS_CHANGED',
+    'PARTICIPANT_SUSPENDED'
   ];
 
   eventTypes.forEach(type => {

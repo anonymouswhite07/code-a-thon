@@ -19,8 +19,16 @@ public class SubmissionResponse {
     private LocalDateTime submissionTime;
     private Integer passedTestCases;
     private Integer totalTestCases;
+    private Integer attemptNumber;
+    private Integer penalty;
 
     public SubmissionResponse() {}
+
+    public Integer getAttemptNumber() { return attemptNumber; }
+    public void setAttemptNumber(Integer attemptNumber) { this.attemptNumber = attemptNumber; }
+
+    public Integer getPenalty() { return penalty; }
+    public void setPenalty(Integer penalty) { this.penalty = penalty; }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

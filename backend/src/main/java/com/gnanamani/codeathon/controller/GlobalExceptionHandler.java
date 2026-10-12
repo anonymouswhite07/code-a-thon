@@ -42,6 +42,12 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("INVALID_CREDENTIALS", "Invalid email or password"));
     }
 
+    @ExceptionHandler({org.springframework.security.authentication.DisabledException.class, org.springframework.security.authentication.LockedException.class})
+    public ResponseEntity<ApiResponse<Void>> handleAccountSuspended(Exception ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error("ACCOUNT_SUSPENDED", "Your account has been suspended. Please contact the administrator to make your account active."));
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)

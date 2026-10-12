@@ -59,3 +59,46 @@
 - **Remediation**: Implemented a mandatory 5-second cooldown between submissions per participant, and a 30-second identical code rejection check in `SubmissionEvaluationService.java`.
 - **Regression Test**: `SubmissionThrottleTest.java` (`testCooldownRejection`, `testDuplicateCodeRejection`).
 - **Result**: 🟢 **PASSED**. Cooldown and duplicate prevention verified.
+
+### Vulnerability 6: Brute-Force Login & Credential Stuffing
+- **Vulnerability**: Unrestricted request rates on `/api/v1/auth/login` and `/api/v1/auth/register` enabled automated password guessing and credential stuffing.
+- **Remediation**: Implemented `RateLimitingFilter.java` enforcing a sliding window cap of 20 req/min per IP on auth endpoints, 30 req/min on submissions, and 150 req/min general API. Rejections return `HTTP 429 Too Many Requests` with `Retry-After: 60`.
+- **Regression Test**: `RateLimitingFilterTest.java` and Test 3 in `tests/comprehensive_qa_security_audit.test.js`.
+- **Result**: 🟢 **PASSED**. 21st burst request triggers HTTP 429 with standard JSON error payload.
+
+### Vulnerability 7: Client-Side Anti-Cheating Bypass & Attempt Flooding
+- **Vulnerability**: Participants modifying frontend code could bypass tab-switch penalties, edit locked questions, or repeatedly guess solutions without consequence.
+- **Remediation**: Implemented server-authoritative `ParticipantQuestionLock` table with unique constraint on `(participant_id, question_id)`. Zero-tolerance tab-switching immediately evaluates the latest draft and permanently locks the question (`HTTP 409 Conflict` on retry). Max 4 attempts enforced with a -25 point penalty deduction starting on attempt 2.
+- **Regression Test**: `IntegrityServiceTest.java`, `tests/integrity_system.test.js`, and `tests/comprehensive_qa_security_audit.test.js`.
+- **Result**: 🟢 **PASSED**. Locks, attempt limits, and penalties verified.
+
+---
+
+## 3. Comprehensive Automation Test Summary
+
+```text
+========================================================================
+AUTOMATION TEST SUITE SUMMARY:
+1. Spring Boot JUnit Backend Tests:
+   - IntegrityServiceTest ................... 6/6 PASSED
+   - RateLimitingFilterTest ................. 2/2 PASSED
+   - RbacSecurityTest ....................... 6/6 PASSED
+   - SubmissionThrottleTest ................. 6/6 PASSED
+   - JwtTokenProviderTest .................. 4/4 PASSED
+   - AuthControllerTest ..................... 4/4 PASSED
+   - AuthServiceTest ........................ 5/5 PASSED
+   - CompetitionEngineServiceTest ........... 3/3 PASSED
+   - LeaderboardFreezeSnapshotTest .......... 1/1 PASSED
+   - ScoringDeterministicTest ............... 2/2 PASSED
+   Total Backend: 39/39 (100% PASS)
+
+2. End-to-End Node Integration & Contract Tests:
+   - tests/comprehensive_qa_security_audit.test.js . 24/24 PASSED
+   - tests/code_draft_persistence.test.js .......... 12/12 PASSED
+   - tests/integrity_system.test.js ................. 5/5 PASSED
+   Total Node Suites: 41/41 (100% PASS)
+
+GRAND TOTAL: 80 AUTOMATED TESTS PASSING (0 FAILURES, 0 ERRORS)
+========================================================================
+```
+

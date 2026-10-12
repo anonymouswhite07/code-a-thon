@@ -22,16 +22,36 @@ public class SubmissionController {
     private final SubmissionRepository submissionRepository;
     private final SubmissionResultRepository submissionResultRepository;
     private final ParticipantRepository participantRepository;
+    private final com.gnanamani.codeathon.repository.UserRepository userRepository;
 
     public SubmissionController(
             SubmissionEvaluationService submissionEvaluationService,
             SubmissionRepository submissionRepository,
             SubmissionResultRepository submissionResultRepository,
-            ParticipantRepository participantRepository) {
+            ParticipantRepository participantRepository,
+            com.gnanamani.codeathon.repository.UserRepository userRepository) {
         this.submissionEvaluationService = submissionEvaluationService;
         this.submissionRepository = submissionRepository;
         this.submissionResultRepository = submissionResultRepository;
         this.participantRepository = participantRepository;
+        this.userRepository = userRepository;
+    }
+
+    private Participant resolveParticipant(Authentication authentication) {
+        if (authentication == null) {
+            throw new AccessDeniedException("Authentication required. Please log in.");
+        }
+        String email = authentication.getName();
+        return participantRepository.findByUserEmail(email)
+                .orElseGet(() -> {
+                    com.gnanamani.codeathon.domain.User user = userRepository.findByEmail(email).orElse(null);
+                    if (user != null) {
+                        String roleLabel = user.getRole() == com.gnanamani.codeathon.domain.Role.ROLE_PARTICIPANT ? "Participant" : "Staff / Faculty";
+                        Participant p = new Participant(user, "0000000000", "Gnanamani College of Technology", "Computer Science", roleLabel, "Advanced");
+                        return participantRepository.save(p);
+                    }
+                    throw new AccessDeniedException("Authenticated user account not found: " + email);
+                });
     }
 
     private SubmissionResponse mapToDto(Submission s) {
@@ -61,29 +81,16 @@ public class SubmissionController {
     public ResponseEntity<ApiResponse<SubmissionResponse>> submitCode(
             @Valid @RequestBody SubmitCodeRequest request,
             Authentication authentication) {
-        if (authentication == null) {
-            throw new AccessDeniedException("Authentication required");
-        }
-
-        Participant participant = participantRepository.findByUserEmail(authentication.getName())
-                .orElseThrow(() -> new AccessDeniedException("Only registered participants can submit code."));
-
+        Participant participant = resolveParticipant(authentication);
         Submission submission = submissionEvaluationService.evaluateSubmission(participant, request);
         return ResponseEntity.ok(ApiResponse.ok(mapToDto(submission)));
     }
 
     @GetMapping("/my")
     public ResponseEntity<ApiResponse<List<SubmissionResponse>>> getMySubmissions(Authentication authentication) {
-        if (authentication == null) {
-            throw new AccessDeniedException("Authentication required");
-        }
-
-        Participant participant = participantRepository.findByUserEmail(authentication.getName())
-                .orElseThrow(() -> new AccessDeniedException("Participant record not found."));
-
+        Participant participant = resolveParticipant(authentication);
         List<SubmissionResponse> list = submissionRepository.findByParticipantOrderBySubmissionTimeDesc(participant)
                 .stream().map(this::mapToDto).collect(Collectors.toList());
-
         return ResponseEntity.ok(ApiResponse.ok(list));
     }
 
@@ -91,16 +98,9 @@ public class SubmissionController {
     public ResponseEntity<ApiResponse<List<SubmissionResponse>>> getMySubmissionsForQuestion(
             @PathVariable Long questionId,
             Authentication authentication) {
-        if (authentication == null) {
-            throw new AccessDeniedException("Authentication required");
-        }
-
-        Participant participant = participantRepository.findByUserEmail(authentication.getName())
-                .orElseThrow(() -> new AccessDeniedException("Participant record not found."));
-
+        Participant participant = resolveParticipant(authentication);
         List<SubmissionResponse> list = submissionRepository.findByParticipantIdAndQuestionIdOrderBySubmissionTimeDesc(
                 participant.getId(), questionId).stream().map(this::mapToDto).collect(Collectors.toList());
-
         return ResponseEntity.ok(ApiResponse.ok(list));
     }
 

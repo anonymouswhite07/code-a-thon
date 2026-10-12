@@ -11,16 +11,10 @@ services:
       - key: PORT
         value: 10000
       - key: CORS_ALLOWED_ORIGINS
-        value: https://*.vercel.app,http://localhost:3000,http://localhost:3001
+        value: https://code-a-thon-mu.vercel.app,https://*.vercel.app,http://localhost:3000,http://localhost:3001
       - key: CODE_RUNNER_URL
         value: http://localhost:5050
       - key: JWT_SECRET
         generateValue: true
-      - key: SPRING_DATASOURCE_URL
-        value: jdbc:h2:mem:codeathondb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-      - key: SPRING_DATASOURCE_DRIVER
-        value: org.h2.Driver
-      - key: SPRING_DATASOURCE_USERNAME
-        value: sa
-      - key: SPRING_DATASOURCE_PASSWORD
-        value: password
+      - key: DATABASE_URL
+        sync: false

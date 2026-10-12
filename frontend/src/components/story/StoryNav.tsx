@@ -11,6 +11,7 @@ interface StoryNavProps {
   onOpenRules: () => void;
   onOpenSchedule: () => void;
   onOpenLeaderboard: () => void;
+  activeRoundId?: number;
 }
 
 const STORY_CHAPTERS = [
@@ -27,7 +28,8 @@ export const StoryNav: React.FC<StoryNavProps> = ({
   onOpenPlayground,
   onOpenRules,
   onOpenSchedule,
-  onOpenLeaderboard
+  onOpenLeaderboard,
+  activeRoundId = 1
 }) => {
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('begin');
@@ -144,6 +146,18 @@ export const StoryNav: React.FC<StoryNavProps> = ({
             Schedule
           </button>
 
+          {/* Start Your Round Prominent CTA */}
+          <Link
+            href={`/compete/${activeRoundId || 1}`}
+            className="group relative overflow-hidden px-3.5 py-1.5 bg-[#FF6B35] hover:bg-[#ff5517] text-white text-xs font-black uppercase tracking-wider rounded-lg brutal-border brutal-shadow-sm brutal-shadow-hover flex items-center gap-1.5 transition-all duration-200 hover:scale-105"
+            title="Start your competition round"
+          >
+            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
+            <span className="w-2 h-2 rounded-full bg-[#B8E63E] animate-ping" />
+            <span>Start Your Round</span>
+            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+          </Link>
+
           {user ? (
             <div className="flex items-center gap-2 pl-2 border-l border-gray-300">
               <Link
@@ -163,12 +177,9 @@ export const StoryNav: React.FC<StoryNavProps> = ({
               </Link>
               <Link
                 href="/register"
-                className="group relative overflow-hidden px-4 py-2 bg-[#FF6B35] hover:bg-[#ff5517] text-white text-xs font-black uppercase tracking-wider rounded-lg brutal-border brutal-shadow-sm brutal-shadow-hover flex items-center gap-1.5 transition-all duration-200 hover:scale-105"
+                className="px-3 py-1.5 bg-white hover:bg-gray-100 text-[#171717] text-xs font-mono font-bold rounded-lg brutal-border transition-colors"
               >
-                {/* Shimmer sweep effect */}
-                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
-                <span>Enter Code-a-thon</span>
-                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                Register
               </Link>
             </div>
           )}
@@ -237,12 +248,20 @@ export const StoryNav: React.FC<StoryNavProps> = ({
               Competition Rules
             </button>
             <Link
+              href={`/compete/${activeRoundId || 1}`}
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full text-center py-2.5 bg-[#FF6B35] text-white font-black text-xs uppercase tracking-wider brutal-border rounded-lg cursor-pointer flex items-center justify-center gap-2 shadow-sm"
+            >
+              <span className="w-2 h-2 rounded-full bg-[#B8E63E] animate-ping" />
+              <span>Start Your Round</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+            <Link
               href="/register"
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full text-center py-2.5 bg-[#FF6B35] text-white font-black text-xs uppercase tracking-wider brutal-border rounded-lg cursor-pointer flex items-center justify-center gap-2"
+              className="w-full text-center py-2 bg-white text-[#171717] font-mono text-xs font-bold brutal-border rounded-lg cursor-pointer flex items-center justify-center gap-2 hover:bg-gray-50"
             >
-              <span>Enter Code-a-thon</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <span>Register Account</span>
             </Link>
           </div>
         </div>

@@ -35,6 +35,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String email = tokenProvider.getEmailFromToken(jwt);
                 UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
 
+                if (!userDetails.isEnabled() || !userDetails.isAccountNonLocked()) {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"success\":false,\"error\":{\"code\":\"ACCOUNT_SUSPENDED\",\"message\":\"Your account has been suspended by the administrator. Please contact the administrator to make your account active.\"}}");
+                    return;
+                }
+
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

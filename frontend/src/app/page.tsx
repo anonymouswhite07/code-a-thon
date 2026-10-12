@@ -90,6 +90,11 @@ export default function Home() {
   const round2Data = rounds.find((r) => r.roundNumber === 2 || r.language?.toUpperCase() === 'PYTHON');
   const round3Data = rounds.find((r) => r.roundNumber === 3 || r.language?.toUpperCase() === 'JAVA');
 
+  const liveRound = rounds.find((r) => r.status === 'LIVE' || r.status === 'IN_PROGRESS');
+  const targetRound = liveRound || round1Data || rounds[0];
+  const activeRoundId = targetRound?.id || 1;
+  const activeRoundTitle = targetRound?.title || 'Round 01';
+
   return (
     <main className="min-h-screen bg-[#F7F4ED] text-[#171717] flex flex-col selection:bg-[#FFD84D] selection:text-[#171717] relative">
       {/* 0. Ambient Story Parallax Floating Ornaments & Mouse Drift */}
@@ -101,10 +106,14 @@ export default function Home() {
         onOpenRules={() => setIsRulesOpen(true)}
         onOpenSchedule={() => setIsScheduleOpen(true)}
         onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
+        activeRoundId={activeRoundId}
       />
 
       {/* 2. Chapter 01: BEGIN — The Beginning */}
-      <ChapterBeginning />
+      <ChapterBeginning
+        activeRoundId={activeRoundId}
+        activeRoundTitle={activeRoundTitle}
+      />
 
       {/* 4. Chapter 02: THINK — The Question & First Failure/Success */}
       <ChapterQuestion />

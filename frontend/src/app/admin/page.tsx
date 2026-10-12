@@ -14,6 +14,7 @@ import {
   Unlock,
   Plus,
   Trash2,
+  Edit3,
   Bell,
   History,
   CheckCircle2,
@@ -26,18 +27,23 @@ import {
   Search
 } from 'lucide-react';
 import { api, getUser, logout, subscribeToEvents } from '@/lib/api';
+import CustomModal, { ModalConfig } from '@/components/shared/CustomModal';
 
 export default function AdminConsolePage() {
   const router = useRouter();
   const [stats, setStats] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'rounds' | 'questions' | 'participants' | 'announcements' | 'audit'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'rounds' | 'questions' | 'participants' | 'announcements' | 'audit' | 'integrity'>('overview');
 
   // Data states
   const [rounds, setRounds] = useState<any[]>([]);
   const [questions, setQuestions] = useState<any[]>([]);
   const [participants, setParticipants] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [integritySessions, setIntegritySessions] = useState<any[]>([]);
+  const [integrityEvents, setIntegrityEvents] = useState<any[]>([]);
   const [searchPart, setSearchPart] = useState('');
+  const [roundDurations, setRoundDurations] = useState<Record<number, number>>({});
+  const [editingQ, setEditingQ] = useState<any | null>(null);
 
   // Forms
   const [newAnn, setNewAnn] = useState({ title: '', content: '', type: 'GENERAL' });
@@ -62,6 +68,8 @@ export default function AdminConsolePage() {
     api.admin.getAllQuestions().then(setQuestions).catch(() => {});
     api.admin.getParticipants().then(setParticipants).catch(() => {});
     api.admin.getAuditLogs().then(setAuditLogs).catch(() => {});
+    api.admin.getIntegritySessions().then(setIntegritySessions).catch(() => {});
+    api.admin.getIntegrityEvents().then(setIntegrityEvents).catch(() => {});
   };
 
   useEffect(() => {
@@ -80,12 +88,96 @@ export default function AdminConsolePage() {
     return () => unsubscribe();
   }, [router]);
 
-  const handleRoundControl = async (id: number, action: string) => {
+  const [modalConfig, setModalConfig] = useState<ModalConfig | null>(null);
+
+  const showCustomAlert = (
+    title: string,
+    message: string,
+    type: 'alert' | 'warning' | 'danger' | 'success' | 'info' = 'alert'
+  ) => {
+    setModalConfig({
+      isOpen: true,
+      title,
+      message,
+      type,
+      confirmText: 'Understood',
+      onConfirm: () => setModalConfig(null)
+    });
+  };
+
+  const showCustomConfirm = (
+    title: string,
+    message: string,
+    onConfirm: () => void,
+    confirmText: string = 'Confirm & Proceed',
+    cancelText: string = 'Cancel',
+    type: 'confirm' | 'danger' | 'warning' = 'confirm'
+  ) => {
+    setModalConfig({
+      isOpen: true,
+      title,
+      message,
+      type,
+      confirmText,
+      cancelText,
+      onConfirm: () => {
+        setModalConfig(null);
+        onConfirm();
+      },
+      onCancel: () => setModalConfig(null)
+    });
+  };
+
+  const handleRoundControl = async (id: number, action: string, durationMinutes?: number) => {
     try {
-      await api.admin.controlRound(id, action);
+      await api.admin.controlRound(id, action, durationMinutes);
       loadData();
     } catch (err: any) {
-      alert(`Action failed: ${err.message}`);
+      showCustomAlert('Action Failed', err.message, 'danger');
+    }
+  };
+
+  const handleRoundDurationChange = async (id: number, durationMinutes: number) => {
+    if (!durationMinutes || durationMinutes <= 0) {
+      showCustomAlert('Invalid Duration', 'Duration must be greater than 0 minutes.', 'warning');
+      return;
+    }
+    try {
+      await api.admin.controlRound(id, 'SET_DURATION', durationMinutes);
+      showCustomAlert('Duration Updated', `Round #${id} duration updated to ${durationMinutes} minutes.`, 'success');
+      loadData();
+    } catch (err: any) {
+      showCustomAlert('Update Failed', err.message, 'danger');
+    }
+  };
+
+  const handleStartEditQuestion = (q: any) => {
+    setEditingQ({
+      id: q.id,
+      title: q.title || '',
+      slug: q.slug || '',
+      description: q.description || '',
+      points: q.points || 100,
+      difficulty: q.difficulty || 'MEDIUM',
+      inputFormat: q.inputFormat || '',
+      outputFormat: q.outputFormat || '',
+      constraints: q.constraints || '',
+      starterCode: q.starterCode || '',
+      timeLimitMs: q.timeLimitMs || 2000,
+      memoryLimitMb: q.memoryLimitMb || 128
+    });
+  };
+
+  const handleSaveEditQuestion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingQ) return;
+    try {
+      await api.admin.updateQuestion(editingQ.id, editingQ);
+      showCustomAlert('Question Updated', `Question #${editingQ.id} ("${editingQ.title}") was successfully updated.`, 'success');
+      setEditingQ(null);
+      loadData();
+    } catch (err: any) {
+      showCustomAlert('Update Failed', `Could not update question: ${err.message}`, 'danger');
     }
   };
 
@@ -94,7 +186,7 @@ export default function AdminConsolePage() {
       await api.admin.toggleSuspend(id);
       loadData();
     } catch (err: any) {
-      alert(`Failed to toggle suspension: ${err.message}`);
+      showCustomAlert('Toggle Failed', `Failed to toggle suspension: ${err.message}`, 'danger');
     }
   };
 
@@ -104,7 +196,7 @@ export default function AdminConsolePage() {
       await api.admin.toggleFreeze(!stats.leaderboardFrozen);
       loadData();
     } catch (err: any) {
-      alert(`Freeze toggle failed: ${err.message}`);
+      showCustomAlert('Freeze Error', `Freeze toggle failed: ${err.message}`, 'danger');
     }
   };
 
@@ -114,8 +206,27 @@ export default function AdminConsolePage() {
       await api.admin.publishFinal(!stats.finalResultsPublished);
       loadData();
     } catch (err: any) {
-      alert(`Publish failed: ${err.message}`);
+      showCustomAlert('Publish Error', `Publish failed: ${err.message}`, 'danger');
     }
+  };
+
+  const handleResetParticipantSession = async (sessionId: number, participantName: string, roundTitle: string) => {
+    showCustomConfirm(
+      `Restart Round for ${participantName}`,
+      `Are you sure you want to restart ${roundTitle} for ${participantName}?\n\nThis will clear all question locks, reinstate their competition session to ACTIVE, and allow them to re-enter the fullscreen arena cleanly.`,
+      async () => {
+        try {
+          const res: any = await api.admin.resetIntegritySession(sessionId);
+          showCustomAlert('Round Restarted', res?.message || `Round successfully restarted for ${participantName}!`, 'success');
+          loadData();
+        } catch (err: any) {
+          showCustomAlert('Restart Failed', `Failed to restart round: ${err.message}`, 'danger');
+        }
+      },
+      'Restart & Unlock Session',
+      'Cancel',
+      'warning'
+    );
   };
 
   const handleCreateAnnouncement = async (e: React.FormEvent) => {
@@ -124,9 +235,9 @@ export default function AdminConsolePage() {
       await api.admin.createAnnouncement(newAnn);
       setNewAnn({ title: '', content: '', type: 'GENERAL' });
       loadData();
-      alert('Announcement broadcasted in real-time!');
+      showCustomAlert('Announcement Published', 'Announcement broadcasted in real-time!', 'success');
     } catch (err: any) {
-      alert(`Failed to create announcement: ${err.message}`);
+      showCustomAlert('Announcement Failed', `Failed to create announcement: ${err.message}`, 'danger');
     }
   };
 
@@ -140,21 +251,30 @@ export default function AdminConsolePage() {
           { inputData: '5\n', expectedOutput: 'NO', isHidden: true }
         ]
       });
-      alert('Question and test cases added successfully!');
+      showCustomAlert('Question Created', 'Question and test cases added successfully!', 'success');
       loadData();
     } catch (err: any) {
-      alert(`Failed to create question: ${err.message}`);
+      showCustomAlert('Creation Error', `Failed to create question: ${err.message}`, 'danger');
     }
   };
 
   const handleDeleteQuestion = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this question?')) return;
-    try {
-      await api.admin.deleteQuestion(id);
-      loadData();
-    } catch (err: any) {
-      alert(`Delete failed: ${err.message}`);
-    }
+    showCustomConfirm(
+      'Delete Question',
+      'Are you sure you want to permanently delete this question and all its test cases?',
+      async () => {
+        try {
+          await api.admin.deleteQuestion(id);
+          loadData();
+          showCustomAlert('Deleted', 'Question removed successfully.', 'success');
+        } catch (err: any) {
+          showCustomAlert('Delete Failed', `Delete failed: ${err.message}`, 'danger');
+        }
+      },
+      'Delete Question',
+      'Cancel',
+      'danger'
+    );
   };
 
   return (
@@ -184,6 +304,7 @@ export default function AdminConsolePage() {
               { id: 'questions', label: 'Question Bank', icon: <Terminal className="w-4 h-4" /> },
               { id: 'participants', label: 'Participants', icon: <Users className="w-4 h-4" /> },
               { id: 'announcements', label: 'Announcements', icon: <Bell className="w-4 h-4" /> },
+              { id: 'integrity', label: 'Integrity Monitor', icon: <ShieldAlert className="w-4 h-4 text-red-400" /> },
               { id: 'audit', label: 'Audit Trail', icon: <History className="w-4 h-4" /> }
             ].map((tab) => (
               <button
@@ -335,14 +456,34 @@ export default function AdminConsolePage() {
 
                   <div>
                     <h3 className="text-xl font-black font-display text-white">{r.title}</h3>
-                    <div className="text-xs text-gray-400 font-mono">Language: {r.language} • {r.durationMinutes} Mins</div>
+                    <div className="text-xs text-gray-400 font-mono">Language: {r.language} • Current: {r.durationMinutes} Mins</div>
+                  </div>
+
+                  {/* Duration Selection */}
+                  <div className="flex items-center gap-2 pt-2 border-t border-white/10">
+                    <span className="text-xs font-mono text-gray-400">Duration:</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max="300"
+                      value={roundDurations[r.id] ?? r.durationMinutes ?? 45}
+                      onChange={(e) => setRoundDurations({ ...roundDurations, [r.id]: Number(e.target.value) })}
+                      className="w-16 px-2 py-1 bg-[#171717] rounded border border-white/10 text-xs text-white font-mono"
+                    />
+                    <span className="text-xs font-mono text-gray-400">mins</span>
+                    <button
+                      onClick={() => handleRoundDurationChange(r.id, roundDurations[r.id] ?? r.durationMinutes ?? 45)}
+                      className="px-2.5 py-1 bg-[#3155FF] hover:bg-blue-600 text-white rounded text-xs font-mono font-bold"
+                    >
+                      Set Time
+                    </button>
                   </div>
 
                   {/* Actions */}
                   <div className="grid grid-cols-2 gap-2 pt-2">
                     {r.status !== 'LIVE' ? (
                       <button
-                        onClick={() => handleRoundControl(r.id, 'START')}
+                        onClick={() => handleRoundControl(r.id, 'START', roundDurations[r.id] ?? r.durationMinutes)}
                         className="py-2 px-3 bg-[#B8E63E] text-[#171717] text-xs font-mono font-black uppercase rounded flex items-center justify-center gap-1"
                       >
                         <Play className="w-3.5 h-3.5 fill-current" /> Start
@@ -453,10 +594,18 @@ export default function AdminConsolePage() {
                       <td className="p-3 text-gray-300">R{q.roundNumber} ({q.language})</td>
                       <td className="p-3 text-[#B8E63E]">{q.points} PTS</td>
                       <td className="p-3 text-gray-400">{q.sampleTestCases?.length || 0} Configured</td>
-                      <td className="p-3 text-right">
+                      <td className="p-3 text-right flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => handleStartEditQuestion(q)}
+                          className="p-1 text-blue-400 hover:text-blue-300"
+                          title="Edit Question"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => handleDeleteQuestion(q.id)}
                           className="p-1 text-red-400 hover:text-red-300"
+                          title="Delete Question"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -616,7 +765,298 @@ export default function AdminConsolePage() {
             </div>
           </div>
         )}
+        {/* TAB 7: INTEGRITY MONITOR */}
+        {activeTab === 'integrity' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-black font-display text-white">Competition Integrity Command Center</h3>
+                <p className="text-xs font-mono text-gray-400">
+                  Real-time monitoring of tab switching, fullscreen exits, and clipboard violations.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  api.admin.getIntegritySessions().then(setIntegritySessions);
+                  api.admin.getIntegrityEvents().then(setIntegrityEvents);
+                }}
+                className="px-3 py-1.5 bg-[#3155FF] text-white rounded-lg text-xs font-mono font-bold flex items-center gap-1.5"
+              >
+                <RefreshCw className="w-3.5 h-3.5" /> Refresh Live Feed
+              </button>
+            </div>
+
+            {/* Metrics Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div className="bg-[#242424] p-4 rounded-xl border border-white/10 space-y-1">
+                <div className="text-[10px] font-mono text-gray-400 uppercase">Active Sessions</div>
+                <div className="text-2xl font-black font-mono text-[#B8E63E]">{integritySessions.length}</div>
+              </div>
+              <div className="bg-[#242424] p-4 rounded-xl border border-red-500/30 space-y-1">
+                <div className="text-[10px] font-mono text-red-400 uppercase">Tab Switch Violations</div>
+                <div className="text-2xl font-black font-mono text-red-400">
+                  {integritySessions.reduce((acc, s) => acc + (s.tabSwitchCount || 0), 0)}
+                </div>
+              </div>
+              <div className="bg-[#242424] p-4 rounded-xl border border-amber-500/30 space-y-1">
+                <div className="text-[10px] font-mono text-amber-400 uppercase">Fullscreen Exits</div>
+                <div className="text-2xl font-black font-mono text-amber-400">
+                  {integritySessions.reduce((acc, s) => acc + (s.fullscreenExitCount || 0), 0)}
+                </div>
+              </div>
+              <div className="bg-[#242424] p-4 rounded-xl border border-white/10 space-y-1">
+                <div className="text-[10px] font-mono text-gray-400 uppercase">Clipboard Attempts</div>
+                <div className="text-2xl font-black font-mono text-white">
+                  {integritySessions.reduce((acc, s) => acc + (s.clipboardAttemptCount || 0), 0)}
+                </div>
+              </div>
+            </div>
+
+            {/* Active Sessions Table */}
+            <div className="bg-[#242424] rounded-2xl border border-white/10 overflow-hidden space-y-3 p-4">
+              <h4 className="font-bold text-sm text-white font-mono uppercase">Live Participant Sessions</h4>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs font-mono">
+                  <thead>
+                    <tr className="bg-[#171717] text-gray-400 uppercase border-b border-white/10">
+                      <th className="p-2.5">Participant</th>
+                      <th className="p-2.5">College</th>
+                      <th className="p-2.5">Round</th>
+                      <th className="p-2.5">Tab Switches</th>
+                      <th className="p-2.5">Fullscreen Exits</th>
+                      <th className="p-2.5">Clipboard Attempts</th>
+                      <th className="p-2.5">Session Status</th>
+                      <th className="p-2.5 text-right">Admin Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {integritySessions.map((s) => (
+                      <tr key={s.sessionId} className="hover:bg-white/5">
+                        <td className="p-2.5">
+                          <div className="font-bold text-white">{s.participantName}</div>
+                          <div className="text-[10px] text-gray-400">{s.participantEmail}</div>
+                        </td>
+                        <td className="p-2.5 text-gray-300">{s.college}</td>
+                        <td className="p-2.5 text-[#FFD84D] font-bold">{s.roundTitle}</td>
+                        <td className="p-2.5">
+                          <span className={`px-2 py-0.5 rounded font-black ${s.tabSwitchCount > 0 ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'text-gray-400'}`}>
+                            {s.tabSwitchCount} {s.tabSwitchCount > 0 && '🚨'}
+                          </span>
+                        </td>
+                        <td className="p-2.5">
+                          <span className={`px-2 py-0.5 rounded font-bold ${s.fullscreenExitCount > 0 ? 'bg-amber-500/20 text-amber-400' : 'text-gray-400'}`}>
+                            {s.fullscreenExitCount}
+                          </span>
+                        </td>
+                        <td className="p-2.5 text-gray-300">{s.clipboardAttemptCount}</td>
+                        <td className="p-2.5">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-black ${
+                            s.status === 'TERMINATED_FULLSCREEN'
+                              ? 'bg-red-600 text-white animate-pulse'
+                              : s.status === 'ACTIVE'
+                              ? 'bg-[#B8E63E] text-[#171717]'
+                              : 'bg-white/10 text-gray-300'
+                          }`}>
+                            {s.status === 'TERMINATED_FULLSCREEN' ? 'TERMINATED (FULLSCREEN)' : s.status}
+                          </span>
+                        </td>
+                        <td className="p-2.5 text-right">
+                          <button
+                            onClick={() => handleResetParticipantSession(s.sessionId, s.participantName, s.roundTitle)}
+                            className="px-2.5 py-1 bg-[#10B981] hover:bg-[#059669] text-white rounded font-mono font-bold text-[11px] uppercase tracking-wider inline-flex items-center gap-1 transition-transform hover:scale-105 shadow-sm"
+                            title="Restart Round & unlock questions for this participant"
+                          >
+                            <RefreshCw className="w-3 h-3" /> Restart Round
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {integritySessions.length === 0 && (
+                      <tr>
+                        <td colSpan={8} className="p-4 text-center text-gray-500">
+                          No active competition sessions recorded yet.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Live Integrity Event Trail */}
+            <div className="bg-[#242424] rounded-2xl border border-white/10 overflow-hidden space-y-3 p-4">
+              <h4 className="font-bold text-sm text-white font-mono uppercase">Live Integrity Violation &amp; Event Stream</h4>
+              <div className="overflow-x-auto max-h-96 overflow-y-auto">
+                <table className="w-full text-left text-xs font-mono">
+                  <thead>
+                    <tr className="bg-[#171717] text-gray-400 uppercase border-b border-white/10 sticky top-0">
+                      <th className="p-2.5">Timestamp</th>
+                      <th className="p-2.5">Participant</th>
+                      <th className="p-2.5">Event Type</th>
+                      <th className="p-2.5">Context</th>
+                      <th className="p-2.5">IP Address</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {integrityEvents.map((e) => (
+                      <tr key={e.id} className="hover:bg-white/5">
+                        <td className="p-2.5 text-gray-400 whitespace-nowrap">
+                          {new Date(e.serverTimestamp).toLocaleTimeString()}
+                        </td>
+                        <td className="p-2.5">
+                          <span className="font-bold text-white">{e.participantName}</span>
+                        </td>
+                        <td className="p-2.5">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-black ${
+                            e.eventType === 'FULLSCREEN_EXIT_TERMINATION'
+                              ? 'bg-red-600 text-white font-black animate-pulse'
+                              : e.eventType === 'ADMIN_ROUND_RESET'
+                              ? 'bg-emerald-500 text-black font-black'
+                              : e.eventType === 'TAB_HIDDEN' || e.eventType === 'QUESTION_LOCKED'
+                              ? 'bg-red-500 text-white'
+                              : e.eventType === 'AUTO_SUBMISSION_CONFIRMED'
+                              ? 'bg-[#FF6B35] text-white'
+                              : e.eventType === 'FULLSCREEN_EXITED'
+                              ? 'bg-amber-400 text-[#171717]'
+                              : 'bg-white/10 text-[#B8E63E]'
+                          }`}>
+                            {e.eventType}
+                          </span>
+                        </td>
+                        <td className="p-2.5 text-gray-300 max-w-md truncate">{e.eventContext}</td>
+                        <td className="p-2.5 text-gray-500">{e.ipAddress}</td>
+                      </tr>
+                    ))}
+                    {integrityEvents.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="p-4 text-center text-gray-500">
+                          No integrity events recorded yet.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
+
+      {/* Edit Question Modal */}
+      {editingQ && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#242424] max-w-2xl w-full rounded-2xl brutal-border border-white/20 p-6 space-y-4 text-white max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <h3 className="text-lg font-black font-display text-white flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-[#3155FF]" /> Edit Question #{editingQ.id}
+              </h3>
+              <button
+                onClick={() => setEditingQ(null)}
+                className="text-gray-400 hover:text-white text-xs font-mono px-2 py-1 bg-white/5 rounded"
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditQuestion} className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
+              <div className="md:col-span-2">
+                <label className="block text-gray-400 uppercase mb-1">Title</label>
+                <input
+                  type="text"
+                  required
+                  value={editingQ.title}
+                  onChange={(e) => setEditingQ({ ...editingQ, title: e.target.value })}
+                  className="w-full p-2 bg-[#171717] rounded border border-white/10 text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-400 uppercase mb-1">Points</label>
+                <input
+                  type="number"
+                  required
+                  value={editingQ.points}
+                  onChange={(e) => setEditingQ({ ...editingQ, points: Number(e.target.value) })}
+                  className="w-full p-2 bg-[#171717] rounded border border-white/10 text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-400 uppercase mb-1">Difficulty</label>
+                <select
+                  value={editingQ.difficulty}
+                  onChange={(e) => setEditingQ({ ...editingQ, difficulty: e.target.value })}
+                  className="w-full p-2 bg-[#171717] rounded border border-white/10 text-white"
+                >
+                  <option value="EASY">EASY</option>
+                  <option value="MEDIUM">MEDIUM</option>
+                  <option value="HARD">HARD</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-gray-400 uppercase mb-1">Description (Markdown)</label>
+                <textarea
+                  rows={4}
+                  required
+                  value={editingQ.description}
+                  onChange={(e) => setEditingQ({ ...editingQ, description: e.target.value })}
+                  className="w-full p-2 bg-[#171717] rounded border border-white/10 text-white"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-gray-400 uppercase mb-1">Starter Code</label>
+                <textarea
+                  rows={4}
+                  value={editingQ.starterCode}
+                  onChange={(e) => setEditingQ({ ...editingQ, starterCode: e.target.value })}
+                  className="w-full p-2 bg-[#171717] rounded border border-white/10 text-white font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-400 uppercase mb-1">Input Format</label>
+                <input
+                  type="text"
+                  value={editingQ.inputFormat || ''}
+                  onChange={(e) => setEditingQ({ ...editingQ, inputFormat: e.target.value })}
+                  className="w-full p-2 bg-[#171717] rounded border border-white/10 text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-400 uppercase mb-1">Output Format</label>
+                <input
+                  type="text"
+                  value={editingQ.outputFormat || ''}
+                  onChange={(e) => setEditingQ({ ...editingQ, outputFormat: e.target.value })}
+                  className="w-full p-2 bg-[#171717] rounded border border-white/10 text-white"
+                />
+              </div>
+
+              <div className="md:col-span-2 flex justify-end gap-3 pt-3 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setEditingQ(null)}
+                  className="px-4 py-2 bg-white/10 text-white font-mono rounded hover:bg-white/20"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-[#3155FF] hover:bg-blue-600 text-white font-mono font-bold uppercase rounded"
+                >
+                  Save Question Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* In-App Custom Modal Dialog */}
+      <CustomModal config={modalConfig} onClose={() => setModalConfig(null)} />
     </div>
   );
 }

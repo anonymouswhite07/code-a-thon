@@ -18,7 +18,7 @@ Because we bundle the Spring Boot API, compilers, and the execution sandbox into
 2. Connect your GitHub repository: `https://github.com/anonymouswhite07/code-a-thon`.
 3. Render reads [`render.yaml`](./render.yaml) automatically.
 4. Click **Apply**.
-5. Once deployed, copy your backend URL (e.g., `https://codeathon-backend.onrender.com`).
+5. Once deployed, copy your backend URL (e.g., `https://code-a-thon-xgko.onrender.com`).
 
 ---
 
@@ -62,8 +62,11 @@ Because we bundle the Spring Boot API, compilers, and the execution sandbox into
 By default, the application runs with an embedded H2 database with automatic schema generation and seed data.
 
 To persist competition scores, submissions, and users across container redeploys:
-1. Create a free PostgreSQL database at [Neon.tech](https://neon.tech) (0.5 GB free forever) or [Supabase](https://supabase.com).
-2. Copy the connection string (`postgresql://...`).
-3. In your Render Dashboard, add the environment variable:
-   * `DATABASE_URL` = `postgresql://...`
-4. The backend automatically parses the credentials, configures HikariCP with SSL, and handles schema migration!
+1. Create a free PostgreSQL database at [Supabase](https://supabase.com) or [Neon.tech](https://neon.tech).
+2. For Supabase, use the **Session Pooler** URI (supports IPv4 on Render and local networks):
+   ```text
+   postgresql://postgres.<project-ref>:<password>@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require
+   ```
+3. In your Render Dashboard (or `.env`), add the environment variable:
+   * `DATABASE_URL` = *(Your Supabase connection string)*
+4. The backend automatically parses the credentials, configures HikariCP with SSL, and handles schema migration and seed data automatically!

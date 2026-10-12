@@ -4,6 +4,7 @@ import com.gnanamani.codeathon.domain.*;
 import com.gnanamani.codeathon.dto.SubmitCodeRequest;
 import com.gnanamani.codeathon.repository.*;
 import com.gnanamani.codeathon.service.CompetitionEngineService;
+import com.gnanamani.codeathon.service.QuestionOrderingService;
 import com.gnanamani.codeathon.service.RealtimeEventService;
 import com.gnanamani.codeathon.service.SubmissionEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,7 +39,10 @@ class SubmissionThrottleTest {
     private CompetitionEngineService competitionEngineService;
     @Mock
     private RealtimeEventService realtimeEventService;
+    @Mock
+    private ParticipantQuestionLockRepository lockRepository;
 
+    private QuestionOrderingService questionOrderingService;
     private SubmissionEvaluationService evaluationService;
 
     private Participant participant;
@@ -47,6 +51,7 @@ class SubmissionThrottleTest {
 
     @BeforeEach
     void setUp() {
+        questionOrderingService = new QuestionOrderingService(questionRepository);
         evaluationService = new SubmissionEvaluationService(
                 submissionRepository,
                 submissionResultRepository,
@@ -54,7 +59,9 @@ class SubmissionThrottleTest {
                 testCaseRepository,
                 participantRepository,
                 competitionEngineService,
-                realtimeEventService
+                realtimeEventService,
+                lockRepository,
+                questionOrderingService
         );
 
         User user = new User("student@gct.ac.in", "pass", "Student", Role.ROLE_PARTICIPANT);
@@ -154,5 +161,48 @@ class SubmissionThrottleTest {
         IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
                 evaluationService.evaluateSubmission(participant, request));
         assertTrue(ex.getMessage().contains("not currently allowed"));
+    }
+
+    @Test
+    @DisplayName("Question locked check rejects submission")
+    void testLockedQuestionRejection() {
+        when(questionRepository.findById(200L)).thenReturn(Optional.of(question));
+        when(competitionEngineService.isSubmissionAllowed(round)).thenReturn(true);
+        when(lockRepository.existsByParticipantIdAndQuestionIdAndIsLockedTrue(participant.getId(), question.getId()))
+                .thenReturn(true);
+
+        SubmitCodeRequest request = new SubmitCodeRequest();
+        request.setQuestionId(200L);
+        request.setLanguage("c");
+        request.setSourceCode("int main() { return 0; }");
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
+                evaluationService.evaluateSubmission(participant, request));
+        assertTrue(ex.getMessage().contains("permanently locked"), "Expected locked error, got: " + ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Maximum 4 submissions limit: Fifth submission on same challenge is rejected")
+    void testFourSubmissionsLimitPerQuestion() {
+        when(questionRepository.findById(200L)).thenReturn(Optional.of(question));
+        when(competitionEngineService.isSubmissionAllowed(round)).thenReturn(true);
+        when(lockRepository.existsByParticipantIdAndQuestionIdAndIsLockedTrue(participant.getId(), question.getId()))
+                .thenReturn(false);
+
+        Submission sub1 = new Submission(); sub1.setId(1L);
+        Submission sub2 = new Submission(); sub2.setId(2L);
+        Submission sub3 = new Submission(); sub3.setId(3L);
+        Submission sub4 = new Submission(); sub4.setId(4L);
+        when(submissionRepository.findByParticipantIdAndQuestionIdOrderBySubmissionTimeDesc(participant.getId(), 200L))
+                .thenReturn(List.of(sub4, sub3, sub2, sub1));
+
+        SubmitCodeRequest request = new SubmitCodeRequest();
+        request.setQuestionId(200L);
+        request.setLanguage("c");
+        request.setSourceCode("int main() { return 0; }");
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
+                evaluationService.evaluateSubmission(participant, request));
+        assertTrue(ex.getMessage().contains("Submission limit reached"), "Expected submission limit error, got: " + ex.getMessage());
     }
 }

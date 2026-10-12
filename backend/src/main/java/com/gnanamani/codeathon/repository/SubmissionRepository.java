@@ -22,5 +22,9 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     @Query("SELECT MAX(s.score) FROM Submission s WHERE s.participant.id = :participantId AND s.question.id = :questionId")
     Optional<Integer> findMaxScoreByParticipantAndQuestion(Long participantId, Long questionId);
 
+    Optional<Submission> findByIdempotencyKey(String idempotencyKey);
+
+    long countByParticipantIdAndQuestionId(Long participantId, Long questionId);
+
     long countByStatus(String status);
 }

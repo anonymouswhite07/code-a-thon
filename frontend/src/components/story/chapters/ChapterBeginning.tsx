@@ -13,7 +13,15 @@ int main() {
     return 0;
 }`;
 
-export const ChapterBeginning: React.FC = () => {
+interface ChapterBeginningProps {
+  activeRoundId?: number;
+  activeRoundTitle?: string;
+}
+
+export const ChapterBeginning: React.FC<ChapterBeginningProps> = ({
+  activeRoundId = 1,
+  activeRoundTitle
+}) => {
   const [typedText, setTypedText] = useState<string>('');
 
   useEffect(() => {
@@ -83,18 +91,28 @@ export const ChapterBeginning: React.FC = () => {
 
             {/* CTAs */}
             <div className="pt-4 flex flex-col sm:flex-row items-center gap-4">
+              <Link
+                href={`/compete/${activeRoundId || 1}`}
+                className="w-full sm:w-auto px-8 py-4 bg-[#FF6B35] hover:bg-[#ff5517] text-white font-black text-sm uppercase tracking-wider rounded-xl brutal-border brutal-shadow brutal-shadow-hover flex items-center justify-center gap-3 transition-all hover:scale-105 group relative overflow-hidden"
+              >
+                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#B8E63E] animate-ping" />
+                <span>Start Your Round</span>
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+
               <a
                 href="#think"
-                className="w-full sm:w-auto px-8 py-4 bg-[#FF6B35] hover:bg-[#ff5517] text-white font-black text-sm uppercase tracking-wider rounded-xl brutal-border brutal-shadow brutal-shadow-hover flex items-center justify-center gap-3 transition-transform"
+                className="w-full sm:w-auto px-6 py-4 bg-white hover:bg-[#F7F4ED] text-[#171717] font-black text-sm uppercase tracking-wider rounded-xl brutal-border brutal-shadow brutal-shadow-hover flex items-center justify-center gap-2 transition-colors"
               >
-                Start The Journey <ArrowDown className="w-4 h-4 animate-bounce" />
+                Explore Story <ArrowDown className="w-4 h-4 animate-bounce" />
               </a>
 
               <Link
                 href="/register"
-                className="w-full sm:w-auto px-6 py-4 bg-white hover:bg-[#F7F4ED] text-[#171717] font-black text-sm uppercase tracking-wider rounded-xl brutal-border brutal-shadow brutal-shadow-hover flex items-center justify-center gap-2 transition-colors"
+                className="w-full sm:w-auto px-6 py-4 bg-[#171717] hover:bg-black text-white font-black text-sm uppercase tracking-wider rounded-xl brutal-border brutal-shadow brutal-shadow-hover flex items-center justify-center gap-2 transition-colors"
               >
-                Direct Register <ArrowRight className="w-4 h-4" />
+                Register
               </Link>
             </div>
           </div>

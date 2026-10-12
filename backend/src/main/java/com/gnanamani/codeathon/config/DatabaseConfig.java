@@ -22,7 +22,7 @@ public class DatabaseConfig {
     @Value("${spring.datasource.username:sa}")
     private String defaultUsername;
 
-    @Value("${spring.datasource.password:password}")
+    @Value("${spring.datasource.password:}")
     private String defaultPassword;
 
     @Value("${spring.datasource.driver-class-name:${SPRING_DATASOURCE_DRIVER:}}")

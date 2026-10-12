@@ -104,6 +104,21 @@ public class AdminController {
             case "END":
                 round = competitionEngineService.endRound(id, adminEmail);
                 break;
+            case "SET_DURATION":
+                if (request.getDurationMinutes() != null && request.getDurationMinutes() > 0) {
+                    Round r = roundRepository.findById(id)
+                            .orElseThrow(() -> new IllegalArgumentException("Round not found: " + id));
+                    r.setDurationMinutes(request.getDurationMinutes());
+                    if ("LIVE".equals(r.getStatus()) && r.getStartTime() != null) {
+                        r.setEndTime(r.getStartTime().plusMinutes(request.getDurationMinutes()));
+                    }
+                    round = roundRepository.save(r);
+                    auditService.log(adminEmail, "ROUND_DURATION_SET", "Round " + round.getRoundNumber(),
+                            "Set round duration to " + request.getDurationMinutes() + " mins", "127.0.0.1");
+                } else {
+                    throw new IllegalArgumentException("Duration minutes must be positive");
+                }
+                break;
             default:
                 throw new IllegalArgumentException("Unknown round action: " + action);
         }
@@ -176,6 +191,16 @@ public class AdminController {
         auditService.log(adminEmail, newStatus ? "PARTICIPANT_SUSPENDED" : "PARTICIPANT_RESTORED",
                 "Participant " + p.getId(), p.getUser().getEmail(), "127.0.0.1");
 
+        if (newStatus) {
+            Map<String, Object> payload = Map.of(
+                    "participantId", p.getId(),
+                    "userId", p.getUser().getId(),
+                    "email", p.getUser().getEmail(),
+                    "message", "Your account has been suspended by the administrator. Please contact the administrator to make your account active."
+            );
+            realtimeEventService.broadcast("PARTICIPANT_SUSPENDED", payload);
+        }
+
         return ResponseEntity.ok(ApiResponse.ok(newStatus));
     }
 
@@ -247,6 +272,57 @@ public class AdminController {
 
         String adminEmail = getAdminEmail(authentication);
         auditService.log(adminEmail, "QUESTION_CREATED", "Question " + saved.getId(), saved.getTitle(), "127.0.0.1");
+
+        return ResponseEntity.ok(ApiResponse.ok(saved.getId()));
+    }
+
+    @PutMapping("/questions/{id}")
+    @Transactional
+    public ResponseEntity<ApiResponse<Long>> updateQuestion(
+            @PathVariable Long id,
+            @RequestBody CreateQuestionRequest request,
+            Authentication authentication) {
+        Question q = questionRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Question not found: " + id));
+
+        if (request.getRoundId() != null && !request.getRoundId().equals(q.getRound().getId())) {
+            Round round = roundRepository.findById(request.getRoundId())
+                    .orElseThrow(() -> new IllegalArgumentException("Round not found: " + request.getRoundId()));
+            q.setRound(round);
+        }
+
+        if (request.getTitle() != null && !request.getTitle().trim().isEmpty()) q.setTitle(request.getTitle().trim());
+        if (request.getSlug() != null && !request.getSlug().trim().isEmpty()) q.setSlug(request.getSlug().trim());
+        if (request.getDescription() != null) q.setDescription(request.getDescription());
+        if (request.getInputFormat() != null) q.setInputFormat(request.getInputFormat());
+        if (request.getOutputFormat() != null) q.setOutputFormat(request.getOutputFormat());
+        if (request.getConstraints() != null) q.setConstraints(request.getConstraints());
+        if (request.getExamples() != null) q.setExamples(request.getExamples());
+        if (request.getStarterCode() != null) q.setStarterCode(request.getStarterCode());
+        if (request.getDifficulty() != null) q.setDifficulty(request.getDifficulty());
+        if (request.getPoints() != null) q.setPoints(request.getPoints());
+        if (request.getTimeLimitMs() != null) q.setTimeLimitMs(request.getTimeLimitMs());
+        if (request.getMemoryLimitMb() != null) q.setMemoryLimitMb(request.getMemoryLimitMb());
+        if (request.getIsEnabled() != null) q.setIsEnabled(request.getIsEnabled());
+        if (request.getOrderIndex() != null) q.setOrderIndex(request.getOrderIndex());
+
+        Question saved = questionRepository.save(q);
+
+        if (request.getTestCases() != null && !request.getTestCases().isEmpty()) {
+            testCaseRepository.deleteAll(testCaseRepository.findByQuestionOrderByOrderIndexAsc(saved));
+            for (TestCaseDto tc : request.getTestCases()) {
+                testCaseRepository.save(new TestCase(
+                        saved,
+                        tc.getInputData(),
+                        tc.getExpectedOutput(),
+                        tc.getIsHidden() != null && tc.getIsHidden(),
+                        tc.getOrderIndex() != null ? tc.getOrderIndex() : 0
+                ));
+            }
+        }
+
+        String adminEmail = getAdminEmail(authentication);
+        auditService.log(adminEmail, "QUESTION_UPDATED", "Question " + saved.getId(), saved.getTitle(), "127.0.0.1");
 
         return ResponseEntity.ok(ApiResponse.ok(saved.getId()));
     }

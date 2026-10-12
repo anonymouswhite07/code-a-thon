@@ -13,23 +13,47 @@ import {
   Eye,
   LogOut,
   RefreshCw,
-  FileText
+  FileText,
+  ShieldAlert,
+  AlertTriangle,
+  Clock
 } from 'lucide-react';
 import { api, getUser, logout } from '@/lib/api';
+import CustomModal, { ModalConfig } from '@/components/shared/CustomModal';
 
 export default function JudgeDeskPage() {
   const router = useRouter();
+  const [modalConfig, setModalConfig] = useState<ModalConfig | null>(null);
+
+  const showCustomAlert = (
+    title: string,
+    message: string,
+    type: 'alert' | 'warning' | 'danger' | 'success' = 'danger'
+  ) => {
+    setModalConfig({
+      isOpen: true,
+      title,
+      message,
+      type,
+      confirmText: 'Understood',
+      onConfirm: () => setModalConfig(null)
+    });
+  };
+
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [selectedSub, setSelectedSub] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [filterRound, setFilterRound] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<string>('');
+  const [integrityTimeline, setIntegrityTimeline] = useState<any[]>([]);
+  const [showTimelineModal, setShowTimelineModal] = useState<boolean>(false);
+  const [loadingTimeline, setLoadingTimeline] = useState<boolean>(false);
 
   const loadSubmissions = () => {
     setLoading(true);
     api.judge.getSubmissions(filterRound ? Number(filterRound) : undefined, filterStatus || undefined)
       .then((data: any[]) => setSubmissions(data || []))
-      .catch(() => {})
+      .catch((err: any) => showCustomAlert('Load Error', err?.message || 'Failed to load submissions', 'danger'))
       .finally(() => setLoading(false));
   };
 
@@ -46,7 +70,16 @@ export default function JudgeDeskPage() {
   const inspectSubmission = (id: number) => {
     api.judge.getDetail(id)
       .then(setSelectedSub)
-      .catch((err: any) => alert(err.message));
+      .catch((err: any) => showCustomAlert('Detail Error', err?.message || 'Failed to load submission details', 'danger'));
+  };
+
+  const inspectTimeline = (participantId: number, roundId: number) => {
+    setLoadingTimeline(true);
+    setShowTimelineModal(true);
+    api.judge.getIntegrityEvents(roundId, participantId)
+      .then(setIntegrityTimeline)
+      .catch((err: any) => showCustomAlert('Timeline Error', err?.message || 'Failed to load timeline events', 'danger'))
+      .finally(() => setLoadingTimeline(false));
   };
 
   return (
@@ -181,20 +214,33 @@ export default function JudgeDeskPage() {
         <div className="lg:col-span-5 bg-white p-6 rounded-2xl brutal-border brutal-shadow space-y-4 flex flex-col">
           {selectedSub ? (
             <div className="space-y-4 flex-1 flex flex-col overflow-hidden">
-              <div className="border-b pb-3 space-y-1">
+              <div className="border-b pb-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-mono font-bold text-gray-500">
                     Submission #{selectedSub.id}
                   </span>
-                  <span className="px-2 py-0.5 bg-[#B8E63E] text-[#171717] font-mono text-xs font-bold rounded">
-                    Score: {selectedSub.score} PTS
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {selectedSub.isAutoSubmission && (
+                      <span className="px-2 py-0.5 bg-red-100 text-red-700 font-mono text-[10px] font-black rounded border border-red-300 flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3 text-red-600" /> TAB SWITCH AUTO
+                      </span>
+                    )}
+                    <span className="px-2 py-0.5 bg-[#B8E63E] text-[#171717] font-mono text-xs font-bold rounded">
+                      Score: {selectedSub.score} PTS
+                    </span>
+                  </div>
                 </div>
                 <h3 className="font-bold text-base text-[#171717]">
                   {selectedSub.questionTitle} ({selectedSub.language})
                 </h3>
-                <div className="text-xs text-gray-500 font-mono">
-                  Contestant: {selectedSub.participantName} • Execution: {selectedSub.executionTimeMs}ms
+                <div className="flex items-center justify-between text-xs text-gray-500 font-mono">
+                  <span>Contestant: {selectedSub.participantName} • Time: {selectedSub.executionTimeMs}ms</span>
+                  <button
+                    onClick={() => inspectTimeline(selectedSub.participantId, selectedSub.roundId)}
+                    className="px-2.5 py-1 bg-[#3155FF] text-white rounded text-[11px] font-mono font-bold flex items-center gap-1 hover:brightness-105"
+                  >
+                    <ShieldAlert className="w-3 h-3" /> Audit Timeline
+                  </button>
                 </div>
               </div>
 
@@ -243,6 +289,69 @@ export default function JudgeDeskPage() {
           )}
         </div>
       </div>
+
+      {/* Integrity Audit Timeline Modal */}
+      {showTimelineModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white max-w-2xl w-full rounded-2xl brutal-border brutal-shadow-xl p-6 space-y-4 max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="w-5 h-5 text-red-500" />
+                <h3 className="font-bold text-base text-[#171717] font-mono uppercase">
+                  Contestant Integrity Timeline
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowTimelineModal(false)}
+                className="text-gray-400 hover:text-black font-mono font-bold text-sm"
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-2">
+              {loadingTimeline ? (
+                <div className="text-center py-8 text-gray-400 font-mono text-xs">
+                  Loading integrity events...
+                </div>
+              ) : integrityTimeline.length > 0 ? (
+                <div className="relative border-l-2 border-gray-200 ml-4 space-y-4 py-2">
+                  {integrityTimeline.map((ev, i) => (
+                    <div key={ev.id || i} className="relative pl-6">
+                      <span className={`absolute -left-2 top-1 w-4 h-4 rounded-full border-2 border-white ${
+                        ev.eventType === 'TAB_HIDDEN' || ev.eventType === 'QUESTION_LOCKED'
+                          ? 'bg-red-500'
+                          : ev.eventType === 'AUTO_SUBMISSION_CONFIRMED'
+                          ? 'bg-[#FF6B35]'
+                          : ev.eventType === 'FULLSCREEN_EXITED'
+                          ? 'bg-amber-400'
+                          : 'bg-[#B8E63E]'
+                      }`} />
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2 text-xs font-mono">
+                          <span className="font-bold text-[#171717]">{ev.eventType}</span>
+                          <span className="text-gray-400">{new Date(ev.serverTimestamp).toLocaleTimeString()}</span>
+                        </div>
+                        <p className="text-xs text-gray-600">{ev.eventContext}</p>
+                        {ev.questionTitle && (
+                          <span className="text-[10px] font-mono text-gray-400 block">Question: {ev.questionTitle}</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500 font-mono text-xs">
+                  No integrity violation events recorded for this contestant.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* In-App Custom Modal Dialog */}
+      <CustomModal config={modalConfig} onClose={() => setModalConfig(null)} />
     </div>
   );
 }

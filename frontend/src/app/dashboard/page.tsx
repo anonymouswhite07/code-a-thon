@@ -78,6 +78,14 @@ export default function DashboardPage() {
         api.submissions.getMySubmissions().then(setSubmissions);
         api.auth.me().then(setUser);
       }
+      if (event === 'PARTICIPANT_SUSPENDED') {
+        const curUser = getUser();
+        if (curUser && (curUser.email === data?.email || curUser.id === data?.userId || curUser.participantId === data?.participantId)) {
+          localStorage.removeItem('codeathon_token');
+          localStorage.removeItem('codeathon_user');
+          window.location.href = '/login?suspended=true';
+        }
+      }
     });
 
     // Local countdown ticker
@@ -225,14 +233,24 @@ export default function DashboardPage() {
             </div>
           </div>
         ) : (
-          <div className="bg-white p-8 rounded-2xl brutal-border brutal-shadow text-center space-y-3">
+          <div className="bg-white p-8 rounded-2xl brutal-border brutal-shadow text-center space-y-4">
             <Mascot state="waiting" size={140} showQuote={true} customQuote="Waiting for admin to start round..." />
-            <h3 className="text-xl font-black font-display text-[#171717]">
-              No Active Competition Round at this Moment
-            </h3>
-            <p className="text-xs text-gray-500 font-medium max-w-md mx-auto">
-              Keep your terminal and coffee ready! The admin will broadcast when the next round starts.
-            </p>
+            <div className="space-y-1">
+              <h3 className="text-xl font-black font-display text-[#171717]">
+                No Active Competition Round at this Moment
+              </h3>
+              <p className="text-xs text-gray-500 font-medium max-w-md mx-auto">
+                Keep your terminal and coffee ready! The admin will broadcast when the next round starts.
+              </p>
+            </div>
+            <div className="pt-2 flex items-center justify-center gap-3">
+              <Link
+                href="/compete/1"
+                className="px-6 py-3 bg-[#FF6B35] hover:bg-[#ff5517] text-white font-black text-xs uppercase tracking-wider rounded-xl brutal-border brutal-shadow-sm brutal-shadow-hover flex items-center gap-2 transition-transform hover:scale-105"
+              >
+                <Play className="w-4 h-4 fill-current" /> Start Your Round Arena
+              </Link>
+            </div>
           </div>
         )}
 

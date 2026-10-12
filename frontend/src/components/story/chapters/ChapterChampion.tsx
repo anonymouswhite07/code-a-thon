@@ -62,11 +62,11 @@ export const ChapterChampion: React.FC = () => {
       <div className="max-w-5xl mx-auto w-full space-y-16 text-center relative z-10">
         {/* Dramatic Poetic Pause */}
         <div data-speed="1.1" className="parallax-layer space-y-6 max-w-3xl mx-auto">
-          <p className="font-mono text-sm uppercase tracking-widest text-gray-500 font-bold flex items-center justify-center gap-2">
+          <div className="font-mono text-sm uppercase tracking-widest text-gray-500 font-bold flex items-center justify-center gap-2">
             <LottieAccent type="celebration-spark" size={20} />
             <span>Chapter 06 &bull; The Culmination</span>
             <LottieAccent type="celebration-spark" size={20} />
-          </p>
+          </div>
 
           <div className="space-y-3 text-lg sm:text-2xl font-black text-gray-400 uppercase tracking-widest font-mono">
             <p className="hover:text-[#171717] transition-colors">Three languages.</p>

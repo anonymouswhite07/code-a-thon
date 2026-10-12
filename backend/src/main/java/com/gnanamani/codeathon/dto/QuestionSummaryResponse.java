@@ -10,6 +10,7 @@ public class QuestionSummaryResponse {
     private Integer orderIndex;
     private String status; // UNSOLVED, ATTEMPTED, SOLVED
     private Integer bestScore;
+    private Boolean isLocked = false;
 
     public QuestionSummaryResponse() {}
 
@@ -39,4 +40,7 @@ public class QuestionSummaryResponse {
 
     public Integer getBestScore() { return bestScore; }
     public void setBestScore(Integer bestScore) { this.bestScore = bestScore; }
+
+    public Boolean getIsLocked() { return isLocked; }
+    public void setIsLocked(Boolean isLocked) { this.isLocked = isLocked; }
 }

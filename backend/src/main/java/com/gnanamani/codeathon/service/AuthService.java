@@ -6,6 +6,7 @@ import com.gnanamani.codeathon.repository.ParticipantRepository;
 import com.gnanamani.codeathon.repository.UserRepository;
 import com.gnanamani.codeathon.security.JwtTokenProvider;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -69,12 +70,20 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest request) {
         String email = request.getEmail().toLowerCase().trim();
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(email, request.getPassword())
-        );
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (user.getRole() == Role.ROLE_PARTICIPANT) {
+            Participant p = participantRepository.findByUser(user).orElse(null);
+            if (p != null && Boolean.TRUE.equals(p.getIsSuspended())) {
+                throw new DisabledException("Your account has been suspended. Please contact the administrator to make your account active.");
+            }
+        }
+
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(email, request.getPassword())
+        );
 
         Long participantId = null;
         if (user.getRole() == Role.ROLE_PARTICIPANT) {

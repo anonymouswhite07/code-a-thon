@@ -29,6 +29,8 @@ public class SubmissionEvaluationService {
     private final ParticipantRepository participantRepository;
     private final CompetitionEngineService competitionEngineService;
     private final RealtimeEventService realtimeEventService;
+    private final ParticipantQuestionLockRepository lockRepository;
+    private final QuestionOrderingService questionOrderingService;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
@@ -42,7 +44,9 @@ public class SubmissionEvaluationService {
             TestCaseRepository testCaseRepository,
             ParticipantRepository participantRepository,
             CompetitionEngineService competitionEngineService,
-            RealtimeEventService realtimeEventService) {
+            RealtimeEventService realtimeEventService,
+            ParticipantQuestionLockRepository lockRepository,
+            QuestionOrderingService questionOrderingService) {
         this.submissionRepository = submissionRepository;
         this.submissionResultRepository = submissionResultRepository;
         this.questionRepository = questionRepository;
@@ -50,6 +54,8 @@ public class SubmissionEvaluationService {
         this.participantRepository = participantRepository;
         this.competitionEngineService = competitionEngineService;
         this.realtimeEventService = realtimeEventService;
+        this.lockRepository = lockRepository;
+        this.questionOrderingService = questionOrderingService;
         this.restTemplate = new RestTemplate();
         this.objectMapper = new ObjectMapper();
     }
@@ -68,7 +74,38 @@ public class SubmissionEvaluationService {
             throw new IllegalStateException("Submissions are not currently allowed for Round " + round.getRoundNumber() + " (Status: " + round.getStatus() + ")");
         }
 
-        // Anti-abuse: Cooldown & deduplication
+        // Integrity check: verify question is not locked for participant
+        if (lockRepository.existsByParticipantIdAndQuestionIdAndIsLockedTrue(participant.getId(), question.getId())) {
+            throw new IllegalStateException("Question is permanently locked and cannot be submitted.");
+        }
+
+        // Sequential progression check: all prior questions in round must have >= 1 submission or be locked
+        List<Question> roundQuestions = questionOrderingService.getOrderedQuestionsForParticipant(participant, round);
+        int targetIndex = -1;
+        for (int i = 0; i < roundQuestions.size(); i++) {
+            if (roundQuestions.get(i).getId().equals(question.getId())) {
+                targetIndex = i;
+                break;
+            }
+        }
+        if (targetIndex > 0) {
+            for (int i = 0; i < targetIndex; i++) {
+                Question priorQ = roundQuestions.get(i);
+                boolean isPriorLocked = lockRepository.existsByParticipantIdAndQuestionIdAndIsLockedTrue(participant.getId(), priorQ.getId());
+                long priorSubCount = submissionRepository.countByParticipantIdAndQuestionId(participant.getId(), priorQ.getId());
+                if (priorSubCount == 0 && !isPriorLocked) {
+                    throw new IllegalStateException("You must submit at least 1 solution for Question " + (i + 1) + " before attempting Question " + (targetIndex + 1) + ".");
+                }
+            }
+        }
+
+        List<Submission> priorSubs = submissionRepository.findByParticipantIdAndQuestionIdOrderBySubmissionTimeDesc(
+                participant.getId(), question.getId());
+        if (priorSubs.size() >= 4) {
+            throw new IllegalStateException("Submission limit reached: Maximum 4 submissions are allowed per challenge.");
+        }
+
+        // Anti-abuse: Cooldown & deduplication for manual submissions
         Optional<Submission> lastSubOpt = submissionRepository.findFirstByParticipantOrderBySubmissionTimeDesc(participant);
         if (lastSubOpt.isPresent()) {
             Submission lastSub = lastSubOpt.get();
@@ -85,6 +122,35 @@ public class SubmissionEvaluationService {
             }
         }
 
+        return executeCodeAndSave(participant, round, question, request.getLanguage(), request.getSourceCode(),
+                false, "MANUAL", null, priorSubs);
+    }
+
+    @Transactional
+    public Submission evaluateAutoSubmission(Participant participant, Round round, Question question,
+                                             String language, String sourceCode, String idempotencyKey) {
+        // Idempotency check: if already evaluated under this idempotencyKey, return existing
+        if (idempotencyKey != null && !idempotencyKey.trim().isEmpty()) {
+            Optional<Submission> existing = submissionRepository.findByIdempotencyKey(idempotencyKey);
+            if (existing.isPresent()) {
+                return existing.get();
+            }
+        }
+
+        List<Submission> priorSubs = submissionRepository.findByParticipantIdAndQuestionIdOrderBySubmissionTimeDesc(
+                participant.getId(), question.getId());
+
+        String safeCode = (sourceCode != null && !sourceCode.trim().isEmpty())
+                ? sourceCode
+                : (question.getStarterCode() != null ? question.getStarterCode() : "// Auto-submitted on tab switch");
+
+        return executeCodeAndSave(participant, round, question, language, safeCode,
+                true, "TAB_SWITCH_AUTO", idempotencyKey, priorSubs);
+    }
+
+    private Submission executeCodeAndSave(Participant participant, Round round, Question question,
+                                          String language, String sourceCode, boolean isAutoSubmission,
+                                          String trigger, String idempotencyKey, List<Submission> priorSubs) {
         List<TestCase> testCases = testCaseRepository.findByQuestionOrderByOrderIndexAsc(question);
         if (testCases.isEmpty()) {
             throw new IllegalStateException("No test cases configured for this question.");
@@ -95,10 +161,13 @@ public class SubmissionEvaluationService {
         submission.setParticipant(participant);
         submission.setRound(round);
         submission.setQuestion(question);
-        submission.setLanguage(request.getLanguage().toUpperCase());
-        submission.setSourceCode(request.getSourceCode());
+        submission.setLanguage(language.toUpperCase());
+        submission.setSourceCode(sourceCode);
         submission.setStatus("RUNNING");
         submission.setSubmissionTime(LocalDateTime.now());
+        submission.setIsAutoSubmission(isAutoSubmission);
+        submission.setSubmissionTrigger(trigger);
+        submission.setIdempotencyKey(idempotencyKey);
         submission = submissionRepository.save(submission);
 
         // Build payload for code-runner
@@ -113,8 +182,8 @@ public class SubmissionEvaluationService {
         }
 
         Map<String, Object> runnerRequest = new HashMap<>();
-        runnerRequest.put("language", request.getLanguage().toLowerCase());
-        runnerRequest.put("sourceCode", request.getSourceCode());
+        runnerRequest.put("language", language.toLowerCase());
+        runnerRequest.put("sourceCode", sourceCode);
         runnerRequest.put("testCases", tcPayload);
         runnerRequest.put("timeLimitMs", question.getTimeLimitMs());
         runnerRequest.put("memoryLimitMb", question.getMemoryLimitMb());
@@ -133,10 +202,17 @@ public class SubmissionEvaluationService {
             int memoryKb = root.path("memoryKb").asInt(0);
             String compileOutput = root.path("compileOutput").asText("");
 
-            int awardedScore = (int) Math.round((scorePercent / 100.0) * question.getPoints());
+            int rawScore = (int) Math.round((scorePercent / 100.0) * question.getPoints());
+
+            // User policy: For each wrong submission, -25 penalty is deducted per attempt
+            long wrongAttempts = priorSubs.stream()
+                    .filter(s -> !"PASSED".equalsIgnoreCase(s.getStatus()))
+                    .count();
+            int penalty = (int) wrongAttempts * 25;
+            int finalScore = "PASSED".equalsIgnoreCase(overallStatus) ? Math.max(0, rawScore - penalty) : 0;
 
             submission.setStatus(overallStatus);
-            submission.setScore(awardedScore);
+            submission.setScore(finalScore);
             submission.setExecutionTimeMs(executionTimeMs);
             submission.setMemoryKb(memoryKb);
             submission.setCompileOutput(compileOutput);
@@ -172,7 +248,9 @@ public class SubmissionEvaluationService {
                     "participantName", participant.getUser().getFullName(),
                     "questionTitle", question.getTitle(),
                     "status", submission.getStatus(),
-                    "score", submission.getScore()
+                    "score", submission.getScore(),
+                    "isAutoSubmission", isAutoSubmission,
+                    "submissionTrigger", trigger
             ));
 
             return submission;

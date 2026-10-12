@@ -21,7 +21,7 @@ export const LottieAccent: React.FC<LottieAccentProps> = ({
   className = ''
 }) => {
   return (
-    <div
+    <span
       style={{ width: size, height: size }}
       className={`inline-flex items-center justify-center select-none ${className}`}
     >
@@ -71,6 +71,6 @@ export const LottieAccent: React.FC<LottieAccentProps> = ({
           <path d="M30 10V20M30 40V50M10 30H20M40 30H50M16 16L23 23M37 37L44 44M44 16L37 23M23 37L16 44" stroke="#FF6B35" strokeWidth="3" strokeLinecap="round" />
         </svg>
       )}
-    </div>
+    </span>
   );
 };

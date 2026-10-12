@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Terminal, ArrowRight, Loader2, KeyRound, Mail, AlertCircle } from 'lucide-react';
+import { Terminal, ArrowRight, Loader2, KeyRound, Mail, AlertCircle, ShieldAlert } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Mascot } from '@/components/mascot/Mascot';
 
@@ -13,6 +13,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('suspended') === 'true') {
+        setError('Your account has been suspended by the administrator. Please ask the admin to make your account active.');
+      }
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +38,11 @@ export default function LoginPage() {
         router.push('/dashboard');
       }
     } catch (err: any) {
-      setError(err.message || 'Invalid email or password');
+      if (err.message?.toLowerCase().includes('suspended')) {
+        setError('Your account has been suspended. Please ask the admin to make your account active.');
+      } else {
+        setError(err.message || 'Invalid email or password');
+      }
     } finally {
       setLoading(false);
     }

@@ -47,6 +47,15 @@ public class Submission {
     @Column(nullable = false)
     private LocalDateTime submissionTime = LocalDateTime.now();
 
+    @Column(nullable = false)
+    private Boolean isAutoSubmission = false;
+
+    @Column(nullable = false, length = 32)
+    private String submissionTrigger = "MANUAL"; // MANUAL, TAB_SWITCH_AUTO, TIMEOUT_AUTO
+
+    @Column(length = 64)
+    private String idempotencyKey;
+
     @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<SubmissionResult> results = new ArrayList<>();
 
@@ -90,4 +99,13 @@ public class Submission {
 
     public List<SubmissionResult> getResults() { return results; }
     public void setResults(List<SubmissionResult> results) { this.results = results; }
+
+    public Boolean getIsAutoSubmission() { return isAutoSubmission; }
+    public void setIsAutoSubmission(Boolean isAutoSubmission) { this.isAutoSubmission = isAutoSubmission; }
+
+    public String getSubmissionTrigger() { return submissionTrigger; }
+    public void setSubmissionTrigger(String submissionTrigger) { this.submissionTrigger = submissionTrigger; }
+
+    public String getIdempotencyKey() { return idempotencyKey; }
+    public void setIdempotencyKey(String idempotencyKey) { this.idempotencyKey = idempotencyKey; }
 }

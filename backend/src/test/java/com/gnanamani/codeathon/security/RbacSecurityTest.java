@@ -79,12 +79,12 @@ class RbacSecurityTest {
     }
 
     @Test
-    @DisplayName("Unauthenticated user accessing protected endpoints receives HTTP 403 / 401")
+    @DisplayName("Unauthenticated user accessing protected endpoints receives HTTP 401 Unauthorized")
     void testUnauthenticatedAccessForbidden() throws Exception {
         mockMvc.perform(get("/api/v1/admin/stats"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
 
         mockMvc.perform(get("/api/v1/submissions/my-submissions"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 }

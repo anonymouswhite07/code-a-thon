@@ -30,12 +30,14 @@ import java.util.stream.Collectors;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RateLimitingFilter rateLimitingFilter;
 
     @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, RateLimitingFilter rateLimitingFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.rateLimitingFilter = rateLimitingFilter;
     }
 
     @Bean
@@ -88,6 +90,21 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/judge/**").hasAnyAuthority("ROLE_JUDGE", "ROLE_ADMIN", "ROLE_SUPER_ADMIN")
                 .anyRequest().authenticated()
             )
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType(org.springframework.http.MediaType.APPLICATION_JSON_VALUE);
+                    com.gnanamani.codeathon.dto.ApiResponse<Void> body = com.gnanamani.codeathon.dto.ApiResponse.error("UNAUTHORIZED", "Authentication required. Please log in.");
+                    new com.fasterxml.jackson.databind.ObjectMapper().writeValue(response.getOutputStream(), body);
+                })
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType(org.springframework.http.MediaType.APPLICATION_JSON_VALUE);
+                    com.gnanamani.codeathon.dto.ApiResponse<Void> body = com.gnanamani.codeathon.dto.ApiResponse.error("FORBIDDEN", accessDeniedException.getMessage() != null ? accessDeniedException.getMessage() : "Access denied.");
+                    new com.fasterxml.jackson.databind.ObjectMapper().writeValue(response.getOutputStream(), body);
+                })
+            )
+            .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

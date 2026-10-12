@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Terminal, Menu, X, ArrowRight, User as UserIcon, ShieldAlert, Award } from 'lucide-react';
-import { getUser, logout, UserSession } from '@/lib/api';
+import { getUser, logout, UserSession, subscribeToEvents } from '@/lib/api';
 
 export const Navbar: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -18,7 +18,21 @@ export const Navbar: React.FC = () => {
       setScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    const unsubscribe = subscribeToEvents((event, data) => {
+      if (event === 'PARTICIPANT_SUSPENDED') {
+        const curUser = getUser();
+        if (curUser && (curUser.email === data?.email || curUser.id === data?.userId || curUser.participantId === data?.participantId)) {
+          logout();
+          window.location.href = '/login?suspended=true';
+        }
+      }
+    });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      unsubscribe();
+    };
   }, [pathname]);
 
   const navLinks = [
@@ -69,6 +83,16 @@ export const Navbar: React.FC = () => {
 
         {/* Action Button / Auth State */}
         <div className="hidden md:flex items-center gap-3">
+          <Link
+            href="/compete/1"
+            className="px-3.5 py-1.5 bg-[#FF6B35] hover:bg-[#ff5517] text-white font-black text-xs uppercase tracking-wider rounded-lg brutal-border brutal-shadow-sm brutal-shadow-hover flex items-center gap-1.5 hover:scale-105 transition-all"
+            title="Start Competition Round"
+          >
+            <span className="w-2 h-2 rounded-full bg-[#B8E63E] animate-ping" />
+            <span>Start Your Round</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+
           {user ? (
             <div className="flex items-center gap-3">
               {user.role === 'ROLE_ADMIN' || user.role === 'ROLE_SUPER_ADMIN' ? (
@@ -150,6 +174,15 @@ export const Navbar: React.FC = () => {
           </div>
 
           <div className="pt-3 border-t border-[#171717]/20 flex flex-col gap-2">
+            <Link
+              href="/compete/1"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full text-center py-2.5 bg-[#FF6B35] text-white font-black text-xs uppercase tracking-wider brutal-border rounded-lg flex items-center justify-center gap-2 shadow-sm"
+            >
+              <span className="w-2 h-2 rounded-full bg-[#B8E63E] animate-ping" />
+              <span>Start Your Round</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
             {user ? (
               <>
                 <Link
