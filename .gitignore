@@ -4,6 +4,8 @@ frontend/node_modules/
 code-runner/node_modules/
 frontend/.next/
 frontend/out/
+package-lock.json
+*/package-lock.json
 
 # Maven / Java builds
 backend/target/
