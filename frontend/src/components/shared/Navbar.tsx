@@ -48,33 +48,36 @@ export const Navbar: React.FC = () => {
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200 ${
         scrolled
-          ? 'py-2.5 bg-[#F7F4ED]/95 backdrop-blur-md border-b-2 border-[#171717] shadow-sm'
-          : 'py-4 bg-[#F7F4ED]'
+          ? 'py-1.5 bg-[#F7F4ED]/95 backdrop-blur-md border-b-2 border-[#171717] shadow-sm'
+          : 'py-2 bg-[#F7F4ED] border-b border-[#171717]/10'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
         {/* Brand / Logo */}
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 bg-[#3155FF] text-white rounded-lg brutal-border brutal-shadow-sm flex items-center justify-center font-black transition-transform group-hover:-rotate-3">
-            <Terminal className="w-5 h-5" />
+        <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0">
+          <div className="w-8 h-8 bg-[#3155FF] text-white rounded-md brutal-border brutal-shadow-sm flex items-center justify-center font-black transition-transform group-hover:-rotate-3 flex-shrink-0">
+            <Terminal className="w-4 h-4" />
           </div>
-          <div>
-            <div className="text-xs font-bold uppercase tracking-wider text-[#FF6B35]">
-              GNANAMANI COLLEGE OF TECHNOLOGY
+          <div className="flex flex-col flex-shrink-0 justify-center">
+            <div className="text-[9px] font-mono font-bold tracking-widest text-[#FF6B35] leading-none whitespace-nowrap">
+              GNANAMANI CSE
             </div>
-            <div className="text-xl font-black tracking-tight text-[#171717] font-display flex items-center gap-1.5">
-              CODE A-THON <span className="text-xs px-1.5 py-0.5 bg-[#B8E63E] rounded brutal-border font-mono">2026</span>
+            <div className="text-base sm:text-lg font-black tracking-tight text-[#171717] font-display whitespace-nowrap flex items-center gap-1.5 leading-snug mt-0.5">
+              <span>CODE-A-THON</span>
+              <span className="text-[10px] px-1.5 py-0.5 bg-[#B8E63E] rounded brutal-border font-mono font-bold leading-none">
+                2026
+              </span>
             </div>
           </div>
         </Link>
 
         {/* Desktop Links */}
-        <div className="hidden md:flex items-center gap-6 text-sm font-bold text-[#171717]">
+        <div className="hidden md:flex items-center gap-5 text-xs font-bold text-[#171717] flex-shrink-0">
           {navLinks.map((link) => (
             <Link
               key={link.label}
               href={link.href}
-              className="hover:text-[#3155FF] transition-colors relative py-1 hover:after:w-full after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-[#3155FF] after:transition-all"
+              className="hover:text-[#3155FF] transition-colors relative py-1 hover:after:w-full after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-[#3155FF] after:transition-all whitespace-nowrap"
             >
               {link.label}
             </Link>
@@ -82,64 +85,64 @@ export const Navbar: React.FC = () => {
         </div>
 
         {/* Action Button / Auth State */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-2.5 flex-shrink-0">
           <Link
             href="/compete/1"
-            className="px-3.5 py-1.5 bg-[#FF6B35] hover:bg-[#ff5517] text-white font-black text-xs uppercase tracking-wider rounded-lg brutal-border brutal-shadow-sm brutal-shadow-hover flex items-center gap-1.5 hover:scale-105 transition-all"
+            className="px-3 py-1.5 bg-[#FF6B35] hover:bg-[#ff5517] text-white font-black text-xs uppercase tracking-wider rounded-lg brutal-border brutal-shadow-sm flex items-center gap-1.5 hover:scale-102 transition-all whitespace-nowrap flex-shrink-0"
             title="Start Competition Round"
           >
-            <span className="w-2 h-2 rounded-full bg-[#B8E63E] animate-ping" />
-            <span>Start Your Round</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#B8E63E] animate-ping flex-shrink-0" />
+            <span className="whitespace-nowrap">Start Your Round</span>
+            <ArrowRight className="w-3.5 h-3.5 flex-shrink-0" />
           </Link>
 
           {user ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 pl-2 border-l border-gray-300 flex-shrink-0">
               {user.role === 'ROLE_ADMIN' || user.role === 'ROLE_SUPER_ADMIN' ? (
                 <Link
                   href="/admin"
-                  className="px-3.5 py-1.5 bg-[#171717] text-white font-bold text-xs rounded-md brutal-border flex items-center gap-1.5 hover:bg-[#3155FF] transition-colors"
+                  className="px-3 py-1.5 bg-[#171717] text-white font-bold text-xs rounded-md brutal-border flex items-center gap-1.5 hover:bg-[#3155FF] transition-colors whitespace-nowrap"
                 >
-                  <ShieldAlert className="w-3.5 h-3.5 text-[#FFD84D]" />
+                  <ShieldAlert className="w-3.5 h-3.5 text-[#FFD84D] flex-shrink-0" />
                   Admin Console
                 </Link>
               ) : user.role === 'ROLE_JUDGE' ? (
                 <Link
                   href="/judge"
-                  className="px-3.5 py-1.5 bg-[#171717] text-white font-bold text-xs rounded-md brutal-border flex items-center gap-1.5 hover:bg-[#3155FF] transition-colors"
+                  className="px-3 py-1.5 bg-[#171717] text-white font-bold text-xs rounded-md brutal-border flex items-center gap-1.5 hover:bg-[#3155FF] transition-colors whitespace-nowrap"
                 >
-                  <Award className="w-3.5 h-3.5 text-[#B8E63E]" />
+                  <Award className="w-3.5 h-3.5 text-[#B8E63E] flex-shrink-0" />
                   Judge Panel
                 </Link>
               ) : (
                 <Link
                   href="/dashboard"
-                  className="px-3.5 py-1.5 bg-[#B8E63E] text-[#171717] font-bold text-xs rounded-md brutal-border brutal-shadow-sm flex items-center gap-1.5 hover:bg-[#a6d82e] transition-colors"
+                  className="px-3 py-1.5 bg-[#B8E63E] text-[#171717] font-bold text-xs rounded-md brutal-border brutal-shadow-sm flex items-center gap-1.5 hover:bg-[#a6d82e] transition-colors whitespace-nowrap"
                 >
-                  <UserIcon className="w-3.5 h-3.5" />
+                  <UserIcon className="w-3.5 h-3.5 flex-shrink-0" />
                   My Dashboard
                 </Link>
               )}
               <button
                 onClick={() => logout()}
-                className="text-xs font-bold text-gray-600 hover:text-red-600 underline"
+                className="text-xs font-bold text-gray-600 hover:text-red-600 underline whitespace-nowrap"
               >
                 Sign Out
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2 pl-2 border-l border-gray-300 flex-shrink-0">
               <Link
                 href="/login"
-                className="px-3.5 py-1.5 text-xs font-bold text-[#171717] hover:text-[#3155FF]"
+                className="px-2.5 py-1.5 text-xs font-bold text-[#171717] hover:text-[#3155FF] whitespace-nowrap"
               >
                 Sign In
               </Link>
               <Link
                 href="/register"
-                className="px-4 py-2 bg-[#FF6B35] text-white text-xs font-black uppercase tracking-wider rounded-lg brutal-border brutal-shadow-sm brutal-shadow-hover flex items-center gap-1.5"
+                className="px-3 py-1.5 bg-white hover:bg-gray-100 text-[#171717] text-xs font-mono font-bold rounded-lg brutal-border transition-colors whitespace-nowrap"
               >
-                Register Now <ArrowRight className="w-3.5 h-3.5" />
+                Register Now
               </Link>
             </div>
           )}

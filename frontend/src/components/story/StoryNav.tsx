@@ -66,39 +66,39 @@ export const StoryNav: React.FC<StoryNavProps> = ({
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'py-2 bg-[#F7F4ED]/90 backdrop-blur-lg border-b-2 border-[#171717] shadow-lg'
-          : 'py-3.5 bg-[#F7F4ED]/95 backdrop-blur-sm border-b border-[#171717]/10'
+          ? 'py-1.5 bg-[#F7F4ED]/95 backdrop-blur-lg border-b-2 border-[#171717] shadow-md'
+          : 'py-2 bg-[#F7F4ED]/95 backdrop-blur-sm border-b border-[#171717]/15'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 flex items-center justify-between gap-3">
         {/* Brand with hover micro-rotation */}
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="transition-all duration-300 group-hover:rotate-6 group-hover:scale-110">
-            <BrandTerminalIcon size={34} />
+        <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0">
+          <div className="transition-all duration-300 group-hover:rotate-6 group-hover:scale-105 flex-shrink-0">
+            <BrandTerminalIcon size={30} />
           </div>
-          <div>
-            <div className="text-[9px] font-mono font-black uppercase tracking-widest text-[#FF6B35] flex items-center gap-1.5">
+          <div className="flex flex-col flex-shrink-0 justify-center">
+            <div className="text-[9px] font-mono font-bold tracking-widest text-[#FF6B35] leading-none whitespace-nowrap flex items-center gap-1.5">
               <span>GNANAMANI CSE</span>
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#10B981] animate-ping" />
             </div>
-            <div className="text-lg font-black tracking-tight text-[#171717] font-display flex items-center gap-1.5">
-              CODE A-THON
-              <span className="text-[10px] px-1.5 py-0.2 bg-[#FFD84D] text-[#171717] rounded-md brutal-border font-mono font-bold group-hover:bg-[#B8E63E] transition-colors">
+            <div className="text-base sm:text-lg font-black tracking-tight text-[#171717] font-display whitespace-nowrap flex items-center gap-1.5 leading-snug mt-0.5">
+              <span>CODE-A-THON</span>
+              <span className="text-[10px] px-1.5 py-0.5 bg-[#FFD84D] text-[#171717] rounded brutal-border font-mono font-bold group-hover:bg-[#B8E63E] transition-colors leading-none">
                 &apos;26
               </span>
             </div>
           </div>
         </Link>
 
-        {/* Story Chapter Navigation with Animated Active Pill */}
-        <div className="hidden lg:flex items-center p-1 bg-black/5 rounded-full border border-black/10">
+        {/* Story Chapter Navigation with Animated Active Pill - shown on xl screens */}
+        <div className="hidden xl:flex items-center p-0.5 bg-black/5 rounded-full border border-black/10 flex-shrink-0">
           {STORY_CHAPTERS.map((ch) => {
             const isActive = activeSection === ch.id;
             return (
               <a
                 key={ch.label}
                 href={ch.href}
-                className={`relative px-3.5 py-1 text-xs font-mono font-black tracking-wider transition-all duration-200 rounded-full cursor-pointer select-none ${
+                className={`relative px-2.5 py-1 text-[11px] font-mono font-black tracking-wider transition-all duration-200 rounded-full cursor-pointer select-none whitespace-nowrap ${
                   isActive
                     ? 'bg-[#171717] text-white brutal-shadow-sm scale-105'
                     : 'text-gray-600 hover:text-[#171717] hover:bg-black/5'
@@ -106,7 +106,7 @@ export const StoryNav: React.FC<StoryNavProps> = ({
               >
                 {ch.label}
                 {isActive && (
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#FF6B35] ml-1.5 animate-pulse align-middle" />
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#FF6B35] ml-1 animate-pulse align-middle" />
                 )}
               </a>
             );
@@ -114,34 +114,34 @@ export const StoryNav: React.FC<StoryNavProps> = ({
         </div>
 
         {/* Right Actions with Interactive Animated Buttons */}
-        <div className="hidden md:flex items-center gap-2.5">
+        <div className="hidden md:flex items-center gap-2 flex-shrink-0">
           {/* Interactive Sandbox Button */}
           <button
             onClick={onOpenPlayground}
-            className="group px-3 py-1.5 bg-white hover:bg-[#3155FF] text-[#171717] hover:text-white text-xs font-mono font-bold rounded-lg brutal-border brutal-shadow-sm brutal-shadow-hover flex items-center gap-2 cursor-pointer transition-all duration-200"
+            className="group px-2.5 py-1.5 bg-white hover:bg-[#3155FF] text-[#171717] hover:text-white text-xs font-mono font-bold rounded-lg brutal-border brutal-shadow-sm flex items-center gap-1.5 cursor-pointer transition-all duration-200 whitespace-nowrap flex-shrink-0"
             title="Open Interactive Code Playground"
           >
-            <CodePlayIcon size={16} className="transition-transform group-hover:scale-125" />
+            <CodePlayIcon size={14} className="transition-transform group-hover:scale-110 flex-shrink-0" />
             <span>Sandbox</span>
           </button>
 
           <button
             onClick={onOpenLeaderboard}
-            className="px-2.5 py-1.5 text-xs font-mono font-bold text-gray-700 hover:text-[#171717] hover:bg-black/5 rounded-md transition-colors cursor-pointer"
+            className="hidden 2xl:inline-flex px-2 py-1 text-xs font-mono font-bold text-gray-700 hover:text-[#171717] hover:bg-black/5 rounded transition-colors cursor-pointer whitespace-nowrap flex-shrink-0"
           >
             Leaderboard
           </button>
 
           <button
             onClick={onOpenRules}
-            className="px-2.5 py-1.5 text-xs font-mono font-bold text-gray-700 hover:text-[#171717] hover:bg-black/5 rounded-md transition-colors cursor-pointer"
+            className="hidden 2xl:inline-flex px-2 py-1 text-xs font-mono font-bold text-gray-700 hover:text-[#171717] hover:bg-black/5 rounded transition-colors cursor-pointer whitespace-nowrap flex-shrink-0"
           >
             Rules
           </button>
 
           <button
             onClick={onOpenSchedule}
-            className="px-2.5 py-1.5 text-xs font-mono font-bold text-gray-700 hover:text-[#171717] hover:bg-black/5 rounded-md transition-colors cursor-pointer"
+            className="hidden 2xl:inline-flex px-2 py-1 text-xs font-mono font-bold text-gray-700 hover:text-[#171717] hover:bg-black/5 rounded transition-colors cursor-pointer whitespace-nowrap flex-shrink-0"
           >
             Schedule
           </button>
@@ -149,35 +149,34 @@ export const StoryNav: React.FC<StoryNavProps> = ({
           {/* Start Your Round Prominent CTA */}
           <Link
             href={`/compete/${activeRoundId || 1}`}
-            className="group relative overflow-hidden px-3.5 py-1.5 bg-[#FF6B35] hover:bg-[#ff5517] text-white text-xs font-black uppercase tracking-wider rounded-lg brutal-border brutal-shadow-sm brutal-shadow-hover flex items-center gap-1.5 transition-all duration-200 hover:scale-105"
+            className="group relative overflow-hidden px-3.5 py-1.5 bg-[#FF6B35] hover:bg-[#ff5517] text-white text-xs font-black uppercase tracking-wider rounded-lg brutal-border brutal-shadow-sm flex items-center gap-1.5 transition-all duration-200 hover:scale-102 whitespace-nowrap flex-shrink-0"
             title="Start your competition round"
           >
-            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
-            <span className="w-2 h-2 rounded-full bg-[#B8E63E] animate-ping" />
-            <span>Start Your Round</span>
-            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#B8E63E] animate-ping flex-shrink-0" />
+            <span className="whitespace-nowrap">Start Your Round</span>
+            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 flex-shrink-0" />
           </Link>
 
           {user ? (
-            <div className="flex items-center gap-2 pl-2 border-l border-gray-300">
+            <div className="flex items-center gap-1.5 pl-2 border-l border-gray-300 flex-shrink-0">
               <Link
                 href={user.role.includes('ADMIN') ? '/admin' : user.role.includes('JUDGE') ? '/judge' : '/dashboard'}
-                className="px-3.5 py-1.5 bg-[#B8E63E] text-[#171717] font-mono text-xs font-black rounded-lg brutal-border hover:scale-105 transition-transform"
+                className="px-3 py-1.5 bg-[#B8E63E] text-[#171717] font-mono text-xs font-black rounded-lg brutal-border hover:scale-105 transition-transform whitespace-nowrap flex-shrink-0"
               >
                 Dashboard
               </Link>
             </div>
           ) : (
-            <div className="flex items-center gap-2 pl-2 border-l border-gray-300">
+            <div className="flex items-center gap-1.5 pl-2 border-l border-gray-300 flex-shrink-0">
               <Link
                 href="/login"
-                className="px-3 py-1.5 text-xs font-mono font-bold text-[#171717] hover:text-[#3155FF] transition-colors"
+                className="px-2.5 py-1.5 text-xs font-mono font-bold text-[#171717] hover:text-[#3155FF] transition-colors whitespace-nowrap flex-shrink-0"
               >
                 Sign In
               </Link>
               <Link
                 href="/register"
-                className="px-3 py-1.5 bg-white hover:bg-gray-100 text-[#171717] text-xs font-mono font-bold rounded-lg brutal-border transition-colors"
+                className="px-3 py-1.5 bg-white hover:bg-gray-100 text-[#171717] text-xs font-mono font-bold rounded-lg brutal-border transition-colors whitespace-nowrap flex-shrink-0"
               >
                 Register
               </Link>
