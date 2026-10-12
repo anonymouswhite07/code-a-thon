@@ -8,7 +8,7 @@ test('Randomized Question Sequence, Locked Question Restriction, Admin Edit Ques
   const adminRes = await fetch(`${BACKEND_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: 'admin@gct.ac.in', password: 'Admin@2026' })
+    body: JSON.stringify({ email: 'admin@gct.org.in', password: 'Gnyan@codingclub.com' })
   });
   const adminData = await adminRes.json();
   assert.strictEqual(adminRes.status, 200, 'Admin login failed');

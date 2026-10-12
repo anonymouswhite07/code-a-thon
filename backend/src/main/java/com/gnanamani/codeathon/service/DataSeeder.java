@@ -66,36 +66,44 @@ public class DataSeeder implements CommandLineRunner {
             configRepository.save(new CompetitionConfig("event.date", "2026-03-28T09:00:00"));
         }
 
-        // 2. Seed Admin & Judges if not present
-        if (userRepository.count() == 0) {
-            String superAdminPass = System.getenv().getOrDefault("SUPER_ADMIN_PASSWORD", "Super@2026");
-            String adminPass = System.getenv().getOrDefault("ADMIN_PASSWORD", "Admin@2026");
-            String judgePass = System.getenv().getOrDefault("JUDGE_PASSWORD", "Judge@2026");
+        // 2. Clear mock participant submissions, locks, sessions, events, and mock students
+        eventRepository.deleteAll();
+        sessionRepository.deleteAll();
+        submissionResultRepository.deleteAll();
+        submissionRepository.deleteAll();
+        lockRepository.deleteAll();
+        participantRepository.deleteAll();
 
-            User superAdmin = new User("superadmin@gct.ac.in", passwordEncoder.encode(superAdminPass), "Dr. K. Arulmurugan (Principal)", Role.ROLE_SUPER_ADMIN);
-            User admin = new User("admin@gct.ac.in", passwordEncoder.encode(adminPass), "Prof. S. Gnanasambandan (HOD CSE)", Role.ROLE_ADMIN);
-            User judge = new User("judge@gct.ac.in", passwordEncoder.encode(judgePass), "Dr. R. Priyadharshini (Lead Judge)", Role.ROLE_JUDGE);
-            userRepository.saveAll(List.of(superAdmin, admin, judge));
+        // Remove old mock/demo participant users and legacy accounts
+        List<User> mockUsers = userRepository.findAll().stream()
+                .filter(u -> u.getRole() == Role.ROLE_PARTICIPANT || u.getEmail().endsWith("@gct.ac.in"))
+                .toList();
+        if (!mockUsers.isEmpty()) {
+            userRepository.deleteAll(mockUsers);
+        }
 
-            // Seed initial student participants
-            User u1 = new User("karthik@gct.ac.in", passwordEncoder.encode("Karthik@2026"), "Karthikeyan S", Role.ROLE_PARTICIPANT);
-            User u2 = new User("sneha@gct.ac.in", passwordEncoder.encode("Sneha@2026"), "Sneha Ramachandran", Role.ROLE_PARTICIPANT);
-            User u3 = new User("rahul@gct.ac.in", passwordEncoder.encode("Rahul@2026"), "Rahul Vignesh M", Role.ROLE_PARTICIPANT);
-            User u4 = new User("ananya@gct.ac.in", passwordEncoder.encode("Ananya@2026"), "Ananya Venkataraman", Role.ROLE_PARTICIPANT);
-            User u5 = new User("dinesh@gct.ac.in", passwordEncoder.encode("Dinesh@2026"), "Dinesh Kumar P", Role.ROLE_PARTICIPANT);
-            userRepository.saveAll(List.of(u1, u2, u3, u4, u5));
+        // 3. Upsert Admin: admin@gct.org.in / Gnyan@codingclub.com
+        String adminEmail = "admin@gct.org.in";
+        String adminPass = System.getenv().getOrDefault("ADMIN_PASSWORD", "Gnyan@codingclub.com");
+        User admin = userRepository.findByEmail(adminEmail)
+                .orElseGet(() -> new User(adminEmail, "", "GCT Admin", Role.ROLE_ADMIN));
+        admin.setPasswordHash(passwordEncoder.encode(adminPass));
+        admin.setFullName("GCT Admin");
+        admin.setRole(Role.ROLE_ADMIN);
+        userRepository.save(admin);
 
-            Participant p1 = new Participant(u1, "9876543210", "Gnanamani College of Technology", "Computer Science & Engineering", "3rd Year", "Advanced");
-            p1.setTotalScore(250);
-            Participant p2 = new Participant(u2, "9876543211", "Gnanamani College of Technology", "Information Technology", "2nd Year", "Intermediate");
-            p2.setTotalScore(200);
-            Participant p3 = new Participant(u3, "9876543212", "Gnanamani College of Technology", "Artificial Intelligence & Data Science", "Final Year", "Advanced");
-            p3.setTotalScore(180);
-            Participant p4 = new Participant(u4, "9876543213", "Gnanamani College of Technology", "Computer Science & Engineering", "1st Year", "Intermediate");
-            p4.setTotalScore(100);
-            Participant p5 = new Participant(u5, "9876543214", "Gnanamani College of Technology", "ECE", "2nd Year", "Beginner");
-            p5.setTotalScore(50);
-            participantRepository.saveAll(List.of(p1, p2, p3, p4, p5));
+        // 4. Upsert Judges: judge1@gct.org.in, judge2@gct.org.in, judge3@gct.org.in / Judge@codingclub.com
+        String judgePass = System.getenv().getOrDefault("JUDGE_PASSWORD", "Judge@codingclub.com");
+        String[] judgeEmails = {"judge1@gct.org.in", "judge2@gct.org.in", "judge3@gct.org.in"};
+        for (int i = 0; i < judgeEmails.length; i++) {
+            String email = judgeEmails[i];
+            int judgeIndex = i + 1;
+            User judge = userRepository.findByEmail(email)
+                    .orElseGet(() -> new User(email, "", "GCT Judge " + judgeIndex, Role.ROLE_JUDGE));
+            judge.setPasswordHash(passwordEncoder.encode(judgePass));
+            judge.setFullName("GCT Judge " + judgeIndex);
+            judge.setRole(Role.ROLE_JUDGE);
+            userRepository.save(judge);
         }
 
         // 3. Ensure Rounds exist
@@ -458,7 +466,7 @@ public class DataSeeder implements CommandLineRunner {
                     "Greetings from Gnanamani College of Technology! Round 01 (C Programming - The Foundation) is now LIVE! Verify your connections and review the problem statements.",
                     "ROUND",
                     r1.getId(),
-                    "admin@gct.ac.in"
+                    "admin@gct.org.in"
             ));
 
             announcementRepository.save(new Announcement(
@@ -466,7 +474,7 @@ public class DataSeeder implements CommandLineRunner {
                     "Ensure that all solutions are written independently. Automated code execution evaluates submissions against hidden test cases. Tab switching and exiting fullscreen are strictly monitored.",
                     "GENERAL",
                     null,
-                    "superadmin@gct.ac.in"
+                    "admin@gct.org.in"
             ));
 
             announcementRepository.save(new Announcement(
@@ -474,7 +482,7 @@ public class DataSeeder implements CommandLineRunner {
                     "Round 02 (The Logic) is scheduled to unlock immediately following the evaluation window of Round 01. Keep your terminal ready!",
                     "SCHEDULE",
                     r2.getId(),
-                    "admin@gct.ac.in"
+                    "admin@gct.org.in"
             ));
         }
 

@@ -137,29 +137,36 @@ export default function LoginPage() {
           {/* Quick Demo Logins for Fast Review */}
           <div className="pt-4 border-t-2 border-[#171717]/10 space-y-2">
             <div className="text-[11px] font-mono font-bold text-gray-500 uppercase text-center">
-              Quick One-Click Demo Logins:
+              Staff Quick Logins:
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-4 gap-1.5">
               <button
                 type="button"
-                onClick={() => handleQuickLogin('karthik@gct.ac.in', 'Karthik@2026')}
-                className="py-1.5 px-2 bg-[#F7F4ED] text-[#171717] rounded brutal-border text-[11px] font-mono font-bold hover:bg-[#3155FF] hover:text-white transition-colors"
-              >
-                Participant
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('admin@gct.ac.in', 'Admin@2026')}
-                className="py-1.5 px-2 bg-[#171717] text-white rounded brutal-border text-[11px] font-mono font-bold hover:bg-[#FF6B35] transition-colors"
+                onClick={() => handleQuickLogin('admin@gct.org.in', 'Gnyan@codingclub.com')}
+                className="py-1.5 px-1 bg-[#171717] text-white rounded brutal-border text-[10px] font-mono font-bold hover:bg-[#FF6B35] transition-colors truncate"
               >
                 Admin
               </button>
               <button
                 type="button"
-                onClick={() => handleQuickLogin('judge@gct.ac.in', 'Judge@2026')}
-                className="py-1.5 px-2 bg-[#B8E63E] text-[#171717] rounded brutal-border text-[11px] font-mono font-bold hover:bg-[#FFD84D] transition-colors"
+                onClick={() => handleQuickLogin('judge1@gct.org.in', 'Judge@codingclub.com')}
+                className="py-1.5 px-1 bg-[#B8E63E] text-[#171717] rounded brutal-border text-[10px] font-mono font-bold hover:bg-[#FFD84D] transition-colors truncate"
               >
-                Judge
+                Judge 1
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('judge2@gct.org.in', 'Judge@codingclub.com')}
+                className="py-1.5 px-1 bg-[#B8E63E] text-[#171717] rounded brutal-border text-[10px] font-mono font-bold hover:bg-[#FFD84D] transition-colors truncate"
+              >
+                Judge 2
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('judge3@gct.org.in', 'Judge@codingclub.com')}
+                className="py-1.5 px-1 bg-[#B8E63E] text-[#171717] rounded brutal-border text-[10px] font-mono font-bold hover:bg-[#FFD84D] transition-colors truncate"
+              >
+                Judge 3
               </button>
             </div>
           </div>

@@ -249,7 +249,7 @@ public class IntegrityController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> resetSession(
             @PathVariable Long sessionId,
             Authentication authentication) {
-        String adminEmail = authentication != null ? authentication.getName() : "admin@gct.ac.in";
+        String adminEmail = authentication != null ? authentication.getName() : "admin@gct.org.in";
         Map<String, Object> result = integrityService.resetSessionByAdmin(sessionId, adminEmail);
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
@@ -261,7 +261,7 @@ public class IntegrityController {
             @PathVariable Long participantId,
             @PathVariable Long roundId,
             Authentication authentication) {
-        String adminEmail = authentication != null ? authentication.getName() : "admin@gct.ac.in";
+        String adminEmail = authentication != null ? authentication.getName() : "admin@gct.org.in";
         Map<String, Object> result = integrityService.resetParticipantRoundByAdmin(participantId, roundId, adminEmail);
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
