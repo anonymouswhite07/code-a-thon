@@ -1,3 +1,4 @@
+
 /**
  * Event Invitation Email Template & Calendar Invite Generator
  * Event: CODE-A-THON 2026
