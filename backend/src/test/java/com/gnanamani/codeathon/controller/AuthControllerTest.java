@@ -67,8 +67,8 @@ class AuthControllerTest {
     @DisplayName("POST /api/v1/auth/login with seeded admin credentials returns JWT")
     void testAdminLoginSuccess() throws Exception {
         LoginRequest req = new LoginRequest();
-        req.setEmail("admin@gct.ac.in");
-        req.setPassword("Admin@2026");
+        req.setEmail("admin@gct.org.in");
+        req.setPassword("Gnyan@codingclub.com");
 
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)

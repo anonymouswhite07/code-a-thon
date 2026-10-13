@@ -127,7 +127,8 @@ class IntegrityServiceTest {
         assertNotNull(response);
         assertNotNull(response.getSessionToken());
         assertEquals(100L, response.getRoundId());
-        assertEquals(201L, response.getCurrentQuestionId());
+        List<Question> ordered = questionOrderingService.getOrderedQuestionsForParticipant(participant, round);
+        assertEquals(ordered.get(0).getId(), response.getCurrentQuestionId());
         assertEquals(2400L, response.getRemainingSeconds());
         assertFalse(response.getIsCompleted());
 

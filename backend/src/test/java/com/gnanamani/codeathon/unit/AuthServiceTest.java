@@ -136,6 +136,9 @@ class AuthServiceTest {
         request.setEmail("admin@gct.ac.in");
         request.setPassword("WrongPassword");
 
+        User user = new User("admin@gct.ac.in", "hash", "Admin", Role.ROLE_ADMIN);
+        when(userRepository.findByEmail("admin@gct.ac.in")).thenReturn(Optional.of(user));
+
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(new BadCredentialsException("Bad credentials"));
 
