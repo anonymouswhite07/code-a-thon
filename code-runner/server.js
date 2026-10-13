@@ -8,13 +8,84 @@ const crypto = require('crypto');
 const PORT = process.env.PORT || 5050;
 
 // Determine available compilers/interpreters
-let hasGcc = false;
-try {
-  execSync('gcc --version', { stdio: 'ignore' });
-  hasGcc = true;
-} catch (e) {
-  hasGcc = false;
+function tryFindSubBins(parent) {
+  const res = [];
+  try {
+    const entries = fs.readdirSync(parent, { withFileTypes: true });
+    for (const ent of entries) {
+      if (ent.isDirectory()) {
+        const subBin = path.join(parent, ent.name, 'bin');
+        if (fs.existsSync(subBin)) res.push(subBin);
+      }
+    }
+  } catch (e) {}
+  return res;
 }
+
+function findGccCommand() {
+  // 1. Direct gcc on PATH
+  try {
+    execSync('gcc --version', { stdio: 'ignore' });
+    return { cmd: 'gcc', dir: null };
+  } catch (e) {}
+
+  // 2. Windows-specific package paths (WinGet LLVM-MinGW, MSYS2, LLVM, etc.)
+  if (os.platform() === 'win32') {
+    const candidates = [];
+    const localAppData = process.env.LOCALAPPDATA;
+    if (localAppData) {
+      const wingetDir = path.join(localAppData, 'Microsoft', 'WinGet', 'Packages');
+      if (fs.existsSync(wingetDir)) {
+        try {
+          const dirs = fs.readdirSync(wingetDir);
+          for (const d of dirs) {
+            if (d.toLowerCase().includes('llvm-mingw') || d.toLowerCase().includes('mingw')) {
+              const fullD = path.join(wingetDir, d);
+              const binCandidates = [
+                path.join(fullD, 'bin'),
+                ...tryFindSubBins(fullD)
+              ];
+              for (const b of binCandidates) {
+                candidates.push(path.join(b, 'gcc.exe'));
+                candidates.push(path.join(b, 'clang.exe'));
+                candidates.push(path.join(b, 'x86_64-w64-mingw32-gcc.exe'));
+              }
+            }
+          }
+        } catch (e) {}
+      }
+    }
+
+    candidates.push(
+      'C:\\msys64\\ucrt64\\bin\\gcc.exe',
+      'C:\\msys64\\mingw64\\bin\\gcc.exe',
+      'C:\\Program Files\\LLVM\\bin\\clang.exe',
+      'C:\\Program Files\\MinGW\\bin\\gcc.exe',
+      'C:\\MinGW\\bin\\gcc.exe'
+    );
+
+    for (const cand of candidates) {
+      if (cand && fs.existsSync(cand)) {
+        try {
+          execSync(`"${cand}" --version`, { stdio: 'ignore' });
+          return { cmd: cand, dir: path.dirname(cand) };
+        } catch (e) {}
+      }
+    }
+  }
+
+  // 3. Clang fallback
+  try {
+    execSync('clang --version', { stdio: 'ignore' });
+    return { cmd: 'clang', dir: null };
+  } catch (e) {}
+
+  return { cmd: null, dir: null };
+}
+
+const gccInfo = findGccCommand();
+const hasGcc = !!gccInfo.cmd;
+const gccCmd = gccInfo.cmd;
 
 let hasJava = false;
 try {
@@ -24,15 +95,20 @@ try {
   hasJava = false;
 }
 
+let pythonCmd = 'python';
 let hasPython = false;
-try {
-  execSync('python --version', { stdio: 'ignore' });
-  hasPython = true;
-} catch (e) {
-  hasPython = false;
+for (const py of ['python', 'python3', 'py']) {
+  try {
+    execSync(`${py} --version`, { stdio: 'ignore' });
+    pythonCmd = py;
+    hasPython = true;
+    break;
+  } catch (e) {
+    hasPython = false;
+  }
 }
 
-console.log(`[CodeRunner] Environment check: GCC=${hasGcc}, Java=${hasJava}, Python=${hasPython}`);
+console.log(`[CodeRunner] Environment check: GCC=${hasGcc} (${gccCmd || 'none'}), Java=${hasJava}, Python=${hasPython} (${pythonCmd})`);
 
 // Concurrency queue to protect memory on free hosting tiers (e.g. Render 512MB RAM)
 class ExecutionQueue {
@@ -68,8 +144,13 @@ class ExecutionQueue {
 const runnerQueue = new ExecutionQueue(2);
 
 // Minimal safe environment for sandboxed child processes — NO secrets leaked
+const basePaths = [
+  gccInfo.dir,
+  process.env.PATH || '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+].filter(Boolean).join(path.delimiter);
+
 const SAFE_ENV = {
-  PATH: process.env.PATH || '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+  PATH: basePaths,
   JAVA_HOME: process.env.JAVA_HOME || '',
   HOME: os.tmpdir(),
   LANG: 'en_US.UTF-8',
@@ -180,7 +261,7 @@ async function executeSubmission({ language, sourceCode, testCases, timeLimitMs 
       for (const tc of testCases) {
         const input = tc.input || '';
         const expected = normalizeOutput(tc.expectedOutput);
-        const res = await runProcess('python', ['-I', scriptPath], { cwd: tempDir }, input, timeLimitMs);
+        const res = await runProcess(pythonCmd, ['-I', scriptPath], { cwd: tempDir }, input, timeLimitMs);
         maxTimeMs = Math.max(maxTimeMs, res.executionTimeMs);
 
         let status = 'PASSED';
@@ -249,7 +330,7 @@ async function executeSubmission({ language, sourceCode, testCases, timeLimitMs 
       fs.writeFileSync(cFile, sourceCode, 'utf8');
 
       if (hasGcc) {
-        const compRes = await runProcess('gcc', ['-O2', '-o', exeFile, cFile], { cwd: tempDir }, '', 5000);
+        const compRes = await runProcess(gccCmd, ['-O2', '-o', exeFile, cFile], { cwd: tempDir }, '', 5000);
         if (compRes.exitCode !== 0) {
           compileSuccess = false;
           compileOutput = compRes.stderr || compRes.stdout;
