@@ -12,12 +12,26 @@ interface PlaygroundProps {
   onClose: () => void;
 }
 
+const STARTER_CODE: Record<'c' | 'python' | 'java', string> = {
+  python: 'print("Hello from Code-a-thon 2026!")\n',
+  c: '#include <stdio.h>\n\nint main() {\n    printf("Hello from Code-a-thon 2026!\\n");\n    return 0;\n}\n',
+  java: 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello from Code-a-thon 2026!");\n    }\n}\n'
+};
+
 export const InteractivePlaygroundDrawer: React.FC<PlaygroundProps> = ({ isOpen, onClose }) => {
-  const [lang, setLang] = useState<'python' | 'c' | 'java'>('python');
-  const [code, setCode] = useState<string>('print("Hello from Code-a-thon 2026!")');
+  const [lang, setLang] = useState<'python' | 'c' | 'java'>('c');
+  const [code, setCode] = useState<string>(STARTER_CODE.c);
   const [input, setInput] = useState<string>('');
   const [output, setOutput] = useState<string>('');
   const [running, setRunning] = useState<boolean>(false);
+
+  const handleLangChange = (l: 'python' | 'c' | 'java') => {
+    setLang(l);
+    const isDefault = Object.values(STARTER_CODE).includes(code) || !code.trim();
+    if (isDefault) {
+      setCode(STARTER_CODE[l]);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -70,7 +84,7 @@ export const InteractivePlaygroundDrawer: React.FC<PlaygroundProps> = ({ isOpen,
             {(['c', 'python', 'java'] as const).map((l) => (
               <button
                 key={l}
-                onClick={() => setLang(l)}
+                onClick={() => handleLangChange(l)}
                 className={`px-3 py-1 rounded text-xs font-mono font-bold uppercase transition-all ${
                   lang === l
                     ? 'bg-[#3155FF] text-white brutal-border'

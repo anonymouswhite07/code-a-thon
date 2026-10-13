@@ -152,6 +152,10 @@ const basePaths = [
 const SAFE_ENV = {
   PATH: basePaths,
   JAVA_HOME: process.env.JAVA_HOME || '',
+  SystemRoot: process.env.SystemRoot || (os.platform() === 'win32' ? 'C:\\Windows' : ''),
+  windir: process.env.windir || (os.platform() === 'win32' ? 'C:\\Windows' : ''),
+  TEMP: os.tmpdir(),
+  TMP: os.tmpdir(),
   HOME: os.tmpdir(),
   LANG: 'en_US.UTF-8',
   TERM: 'dumb'
@@ -330,13 +334,17 @@ async function executeSubmission({ language, sourceCode, testCases, timeLimitMs 
       fs.writeFileSync(cFile, sourceCode, 'utf8');
 
       if (hasGcc) {
-        const compRes = await runProcess(gccCmd, ['-O2', '-o', exeFile, cFile], { cwd: tempDir }, '', 5000);
+        const compRes = await runProcess(gccCmd, ['-O2', cFile, '-lm', '-o', exeFile], { cwd: tempDir }, '', 8000);
         if (compRes.exitCode !== 0) {
           compileSuccess = false;
-          compileOutput = compRes.stderr || compRes.stdout;
+          let rawErr = compRes.stderr || compRes.stdout || 'Compilation failed';
+          compileOutput = rawErr.split(tempDir).join('').replace(/^[\\\/]+/, '');
         } else {
           for (const tc of testCases) {
-            const input = tc.input || '';
+            let input = tc.input !== undefined && tc.input !== null ? String(tc.input) : '';
+            if (input && !input.endsWith('\n')) {
+              input += '\n';
+            }
             const expected = normalizeOutput(tc.expectedOutput);
             const res = await runProcess(exeFile, [], { cwd: tempDir }, input, timeLimitMs);
             maxTimeMs = Math.max(maxTimeMs, res.executionTimeMs);

@@ -291,8 +291,11 @@ export default function CompeteArenaPage() {
         let savedInput = inputDraftsRef.current[qId];
         if (savedInput === undefined) {
           savedInput = localStorage.getItem(getInputKey(qId)) || '';
-          inputDraftsRef.current[qId] = savedInput;
         }
+        if (!savedInput || savedInput.trim().length === 0) {
+          savedInput = detail.sampleTestCases?.[0]?.inputData || '';
+        }
+        inputDraftsRef.current[qId] = savedInput;
         setCustomInput(savedInput);
 
         // Restore run counts
@@ -1016,12 +1019,14 @@ export default function CompeteArenaPage() {
     setOverallStatus('RUNNING');
 
     try {
-      // If user hasn't provided custom input, fall back to the challenge's sample test case input
-      const sampleInput = activeQuestion?.testCases?.find((t: any) => !t.isHidden)?.input || '';
+      // Find sample test case from sampleTestCases
+      const sampleCase = activeQuestion?.sampleTestCases?.[0];
+      const sampleInput = sampleCase?.inputData || '';
+      const sampleExpected = sampleCase?.expectedOutput || '';
       const inputToUse = (customInput && customInput.trim().length > 0) ? customInput : sampleInput;
 
       const res = await api.submissions.runPlayground({
-        language: round?.language || 'python',
+        language: round?.language || 'c',
         sourceCode: code,
         customInput: inputToUse
       });
@@ -1043,18 +1048,27 @@ export default function CompeteArenaPage() {
       const exitCode = res.exitCode !== undefined ? res.exitCode : (status === 'PASSED' ? 0 : 1);
 
       let outputMsg = `Execution Status: ${status}\nExit Code: ${exitCode}\nExecution Time: ${execTime}ms\n\n`;
-      if (inputToUse && inputToUse.trim().length > 0) {
-        outputMsg += `--- Input Provided ---\n${inputToUse}\n\n`;
-      }
-      if (stdout && stdout.trim().length > 0) {
-        outputMsg += `--- Standard Output ---\n${stdout}\n`;
+
+      if (status === 'COMPILE_ERROR') {
+        outputMsg += `--- Compilation / Build Error ---\n${stderr || 'Compilation failed with non-zero exit code.'}\n\n`;
       } else {
-        outputMsg += `--- Standard Output ---\n(no output produced by program)\n`;
+        if (inputToUse && inputToUse.trim().length > 0) {
+          outputMsg += `--- Standard Input Provided ---\n${inputToUse.trimEnd()}\n\n`;
+        }
+        if (stdout && stdout.trim().length > 0) {
+          outputMsg += `--- Standard Output (stdout) ---\n${stdout.trimEnd()}\n\n`;
+        } else {
+          outputMsg += `--- Standard Output (stdout) ---\n(No output produced. Ensure your code prints to stdout using printf() and reads input correctly.)\n\n`;
+        }
+        if (sampleExpected && sampleExpected.trim().length > 0 && (!customInput || customInput.trim() === sampleInput.trim())) {
+          outputMsg += `--- Sample 1 Expected Output ---\n${sampleExpected.trimEnd()}\n\n`;
+        }
+        if (stderr && stderr.trim().length > 0) {
+          outputMsg += `--- Standard Error / Warnings ---\n${stderr.trimEnd()}\n\n`;
+        }
       }
-      if (stderr && stderr.trim().length > 0) {
-        outputMsg += `\n--- Standard Error / Compiler Output ---\n${stderr}\n`;
-      }
-      outputMsg += `\nNotice: ${remaining} of ${MAX_RUNS_PER_CHALLENGE} test runs remaining for this challenge.`;
+
+      outputMsg += `Notice: ${remaining} of ${MAX_RUNS_PER_CHALLENGE} test runs remaining for this challenge.`;
 
       setConsoleOutput(outputMsg);
       setOverallStatus(res.overallStatus || (exitCode === 0 ? 'PASSED' : 'FAILED'));
@@ -1816,8 +1830,17 @@ export default function CompeteArenaPage() {
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2 divide-x divide-white/10 overflow-hidden">
                   {/* Standard Input */}
                   <div className="p-3 flex flex-col overflow-hidden">
-                    <div className="text-[10px] font-mono font-bold text-gray-400 uppercase mb-1">
-                      Custom Standard Input:
+                    <div className="flex items-center justify-between text-[10px] font-mono font-bold text-gray-400 uppercase mb-1">
+                      <span>Custom Standard Input:</span>
+                      {activeQuestion?.sampleTestCases?.[0]?.inputData && (
+                        <button
+                          type="button"
+                          onClick={() => handleCustomInputChange(activeQuestion.sampleTestCases[0].inputData)}
+                          className="text-[#B8E63E] hover:underline normal-case text-[10px]"
+                        >
+                          Use Sample 1 Input
+                        </button>
+                      )}
                     </div>
                     <textarea
                       value={customInput}
@@ -1829,8 +1852,17 @@ export default function CompeteArenaPage() {
 
                   {/* Standard Output */}
                   <div className="p-3 flex flex-col overflow-hidden">
-                    <div className="text-[10px] font-mono font-bold text-gray-400 uppercase mb-1">
-                      Standard Output / Result Logs:
+                    <div className="flex items-center justify-between text-[10px] font-mono font-bold text-gray-400 uppercase mb-1">
+                      <span>Standard Output / Result Logs:</span>
+                      {consoleOutput && (
+                        <button
+                          type="button"
+                          onClick={() => setConsoleOutput('')}
+                          className="text-gray-400 hover:text-white normal-case text-[10px]"
+                        >
+                          Clear
+                        </button>
+                      )}
                     </div>
                     <div className="flex-1 bg-[#1e1e1e] p-2 text-xs font-mono text-[#B8E63E] rounded border border-white/10 overflow-y-auto whitespace-pre-wrap">
                       {consoleOutput || <span className="text-gray-500 italic">Click Run to test against input or Submit to evaluate score.</span>}
