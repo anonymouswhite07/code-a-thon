@@ -22,7 +22,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "Code-a-thon '26 | Gnanamani College of Technology",
-  description: "The Journey of a Coder — 3 Languages, 3 Rounds, 1 Champion. Annual Collegiate Coding Festival by the Department of Computer Science & Engineering.",
+  description: "The Journey of a Coder — 3 Languages, 3 Rounds, 1 Champion. Annual Collegiate Coding Festival organized by the Department of Information Technology by Coding Club, Gnanamani College of Technology.",
 };
 
 export default function RootLayout({

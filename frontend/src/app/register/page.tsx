@@ -14,7 +14,7 @@ export default function RegisterPage() {
     password: '',
     phone: '',
     college: 'Gnanamani College of Technology',
-    department: 'Computer Science & Engineering',
+    department: 'Information Technology',
     year: '3rd Year',
     programmingExp: 'Intermediate'
   });
@@ -160,8 +160,8 @@ export default function RegisterPage() {
                   onChange={handleChange}
                   className="w-full px-3 py-2.5 bg-white brutal-border rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#3155FF]"
                 >
-                  <option>Computer Science & Engineering</option>
                   <option>Information Technology</option>
+                  <option>Computer Science & Engineering</option>
                   <option>Artificial Intelligence & Data Science</option>
                   <option>Electronics & Communication</option>
                   <option>Mechanical Engineering</option>

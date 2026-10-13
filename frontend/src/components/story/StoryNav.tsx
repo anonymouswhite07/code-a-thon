@@ -77,8 +77,8 @@ export const StoryNav: React.FC<StoryNavProps> = ({
             <BrandTerminalIcon size={30} />
           </div>
           <div className="flex flex-col flex-shrink-0 justify-center">
-            <div className="text-[9px] font-mono font-bold tracking-widest text-[#FF6B35] leading-none whitespace-nowrap flex items-center gap-1.5">
-              <span>GNANAMANI CSE</span>
+            <div className="text-[9px] font-mono font-black tracking-wider text-[#FF6B35] leading-none whitespace-nowrap flex items-center gap-1.5">
+              <span>DEPT OF IT • CODING CLUB</span>
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#10B981] animate-ping" />
             </div>
             <div className="text-base sm:text-lg font-black tracking-tight text-[#171717] font-display whitespace-nowrap flex items-center gap-1.5 leading-snug mt-0.5">

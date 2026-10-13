@@ -48,19 +48,28 @@ export const Navbar: React.FC = () => {
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200 ${
         scrolled
-          ? 'py-1.5 bg-[#F7F4ED]/95 backdrop-blur-md border-b-2 border-[#171717] shadow-sm'
-          : 'py-2 bg-[#F7F4ED] border-b border-[#171717]/10'
+          ? 'bg-[#F7F4ED]/95 backdrop-blur-md border-b-2 border-[#171717] shadow-sm'
+          : 'bg-[#F7F4ED] border-b border-[#171717]/10'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+      {/* Prominent Organizer Top Banner */}
+      <div className="bg-[#171717] text-[#FFD84D] text-[10px] sm:text-[11px] font-mono font-bold py-1 px-4 text-center border-b border-white/10 flex items-center justify-center gap-2">
+        <span className="w-2 h-2 rounded-full bg-[#10B981] animate-ping shrink-0" />
+        <span className="uppercase tracking-wider">
+          Organized by Department of Information Technology by Coding Club
+        </span>
+        <span className="hidden md:inline text-gray-400 font-normal">• Gnanamani College of Technology</span>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between gap-4">
         {/* Brand / Logo */}
         <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0">
           <div className="w-8 h-8 bg-[#3155FF] text-white rounded-md brutal-border brutal-shadow-sm flex items-center justify-center font-black transition-transform group-hover:-rotate-3 flex-shrink-0">
             <Terminal className="w-4 h-4" />
           </div>
           <div className="flex flex-col flex-shrink-0 justify-center">
-            <div className="text-[9px] font-mono font-bold tracking-widest text-[#FF6B35] leading-none whitespace-nowrap">
-              GNANAMANI CSE
+            <div className="text-[9px] font-mono font-black tracking-wider text-[#FF6B35] leading-none whitespace-nowrap">
+              DEPT OF IT • CODING CLUB
             </div>
             <div className="text-base sm:text-lg font-black tracking-tight text-[#171717] font-display whitespace-nowrap flex items-center gap-1.5 leading-snug mt-0.5">
               <span>CODE-A-THON</span>

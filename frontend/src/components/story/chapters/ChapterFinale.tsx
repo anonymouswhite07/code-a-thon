@@ -62,7 +62,7 @@ export const ChapterFinale: React.FC = () => {
               AND IN THE END &mdash; <span className="sketch-underline">EVERYONE CODED.</span>
             </p>
             <p className="text-sm sm:text-base text-gray-600 max-w-xl mx-auto mt-4 font-medium">
-              Conducted by the Department of Computer Science &amp; Engineering, Gnanamani College of Technology.
+              Organized by the Department of Information Technology by Coding Club, Gnanamani College of Technology.
             </p>
           </div>
         </div>

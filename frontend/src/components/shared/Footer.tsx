@@ -18,6 +18,9 @@ export const Footer: React.FC = () => {
             <p className="text-xs font-semibold uppercase tracking-wider text-[#FFD84D]">
               GNANAMANI COLLEGE OF TECHNOLOGY
             </p>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/10 rounded text-[11px] font-mono text-[#B8E63E] border border-white/10">
+              Organized by Department of Information Technology by Coding Club
+            </div>
             <p className="text-xs text-gray-400 leading-relaxed">
               NH-7, A.K.Samuthiram, Pachal-PO, Namakkal - 637 018, Tamil Nadu, India.
             </p>
@@ -78,7 +81,7 @@ export const Footer: React.FC = () => {
               </div>
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-[#FF6B35] shrink-0 mt-0.5" />
-                <span>Department of Computer Science & Engineering, GCT</span>
+                <span>Department of Information Technology by Coding Club, GCT</span>
               </div>
               <div className="p-3 bg-white/5 rounded-lg border border-white/10 mt-2">
                 <div className="text-[10px] uppercase font-bold text-gray-400">Campus Helpline</div>

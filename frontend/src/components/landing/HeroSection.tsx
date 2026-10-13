@@ -39,10 +39,14 @@ export const HeroSection: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
           {/* Left Column: Bold Editorial Typography */}
           <div className="lg:col-span-7 space-y-6 text-left">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white brutal-border brutal-shadow-sm rounded-full">
-              <span className="w-2.5 h-2.5 bg-[#FF6B35] rounded-full animate-ping"></span>
-              <span className="text-xs font-black uppercase tracking-widest text-[#171717]">
-                Gnanamani College of Technology Presents
+            {/* Prominent Organizer Banner */}
+            <div className="inline-flex flex-wrap items-center gap-2.5 px-4 py-2.5 bg-[#FFD84D] text-[#171717] brutal-border brutal-shadow rounded-xl">
+              <span className="w-2.5 h-2.5 bg-[#FF6B35] rounded-full animate-ping shrink-0" />
+              <span className="text-xs sm:text-sm font-black uppercase tracking-wide">
+                Organized by Department of Information Technology by Coding Club
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 bg-white text-[#171717] rounded brutal-border font-bold shrink-0">
+                GCT IT
               </span>
             </div>
 
