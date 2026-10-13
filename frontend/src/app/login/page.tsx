@@ -48,10 +48,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickLogin = (em: string, pw: string) => {
-    setEmail(em);
-    setPassword(pw);
-  };
 
   return (
     <div className="min-h-screen bg-[#F7F4ED] flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-dot-pattern">
@@ -134,42 +130,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Quick Demo Logins for Fast Review */}
-          <div className="pt-4 border-t-2 border-[#171717]/10 space-y-2">
-            <div className="text-[11px] font-mono font-bold text-gray-500 uppercase text-center">
-              Staff Quick Logins:
-            </div>
-            <div className="grid grid-cols-4 gap-1.5">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('admin@gct.org.in', 'Gnyan@codingclub.com')}
-                className="py-1.5 px-1 bg-[#171717] text-white rounded brutal-border text-[10px] font-mono font-bold hover:bg-[#FF6B35] transition-colors truncate"
-              >
-                Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('judge1@gct.org.in', 'Judge@codingclub.com')}
-                className="py-1.5 px-1 bg-[#B8E63E] text-[#171717] rounded brutal-border text-[10px] font-mono font-bold hover:bg-[#FFD84D] transition-colors truncate"
-              >
-                Judge 1
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('judge2@gct.org.in', 'Judge@codingclub.com')}
-                className="py-1.5 px-1 bg-[#B8E63E] text-[#171717] rounded brutal-border text-[10px] font-mono font-bold hover:bg-[#FFD84D] transition-colors truncate"
-              >
-                Judge 2
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('judge3@gct.org.in', 'Judge@codingclub.com')}
-                className="py-1.5 px-1 bg-[#B8E63E] text-[#171717] rounded brutal-border text-[10px] font-mono font-bold hover:bg-[#FFD84D] transition-colors truncate"
-              >
-                Judge 3
-              </button>
-            </div>
-          </div>
 
           <div className="text-center text-xs text-gray-600 font-medium pt-2">
             Not registered yet?{' '}
