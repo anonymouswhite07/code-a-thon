@@ -189,6 +189,7 @@ export const api = {
     getParticipants: (search?: string) => fetchWithAuth(`/admin/participants${search ? `?search=${encodeURIComponent(search)}` : ''}`),
     toggleSuspend: (id: number) => fetchWithAuth(`/admin/participants/${id}/suspend`, { method: 'POST' }),
     createAnnouncement: (data: Record<string, unknown>) => fetchWithAuth('/admin/announcements', { method: 'POST', body: JSON.stringify(data) }),
+    getLeaderboard: () => fetchWithAuth('/admin/leaderboard'),
     toggleFreeze: (freeze: boolean) => fetchWithAuth(`/admin/leaderboard/freeze?freeze=${freeze}`, { method: 'POST' }),
     publishFinal: (publish: boolean) => fetchWithAuth(`/admin/leaderboard/publish-final?publish=${publish}`, { method: 'POST' }),
     getAuditLogs: () => fetchWithAuth('/admin/audit-logs'),

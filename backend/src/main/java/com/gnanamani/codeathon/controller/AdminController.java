@@ -400,6 +400,18 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
+    @GetMapping("/leaderboard")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getAdminLeaderboard() {
+        List<LeaderboardEntryResponse> list = leaderboardService.computeLeaderboard();
+        boolean frozen = leaderboardService.isLeaderboardFrozen();
+        boolean published = leaderboardService.isFinalResultsPublished();
+        return ResponseEntity.ok(ApiResponse.ok(Map.of(
+                "leaderboard", list,
+                "frozen", frozen,
+                "finalResultsPublished", published
+        )));
+    }
+
     @GetMapping("/audit-logs")
     public ResponseEntity<ApiResponse<List<AuditLogResponse>>> getAuditLogs() {
         List<AuditLogResponse> list = auditLogRepository.findAllByOrderByTimestampDesc().stream().map(a -> {
