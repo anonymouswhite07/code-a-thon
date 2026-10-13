@@ -115,10 +115,22 @@ export const CodePlaygroundSection: React.FC = () => {
         customInput: input
       });
 
-      const actualOut = res.results?.[0]?.actualOutput || res.compileOutput || 'No output produced';
-      setOutput(actualOut);
-      setStatus(res.overallStatus || 'PASSED');
-      setExecTime(res.executionTimeMs || 0);
+      const firstResult = res.results?.[0];
+      const stdout = (res.stdout !== undefined && res.stdout !== null)
+        ? res.stdout
+        : (firstResult?.actualOutput ?? '');
+      const stderr = res.stderr || firstResult?.error || res.compileOutput || '';
+
+      if (stdout && stdout.trim().length > 0) {
+        setOutput(stdout + (stderr && stderr.trim().length > 0 ? `\n\n--- Standard Error ---\n${stderr}` : ''));
+      } else if (stderr && stderr.trim().length > 0) {
+        setOutput(`--- Error / Compiler Output ---\n${stderr}`);
+      } else {
+        setOutput('(Execution finished successfully with no output produced)');
+      }
+
+      setStatus(res.overallStatus || (stderr ? 'FAILED' : 'PASSED'));
+      setExecTime(res.executionTimeMs || firstResult?.executionTimeMs || 0);
     } catch (err: any) {
       setOutput(`Error: ${err.message}`);
       setStatus('ERROR');

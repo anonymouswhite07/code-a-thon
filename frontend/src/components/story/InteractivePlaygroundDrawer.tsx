@@ -30,7 +30,19 @@ export const InteractivePlaygroundDrawer: React.FC<PlaygroundProps> = ({ isOpen,
         sourceCode: code,
         customInput: input
       });
-      setOutput(res.results?.[0]?.actualOutput || res.compileOutput || 'Done');
+      const firstResult = res.results?.[0];
+      const stdout = (res.stdout !== undefined && res.stdout !== null)
+        ? res.stdout
+        : (firstResult?.actualOutput ?? '');
+      const stderr = res.stderr || firstResult?.error || res.compileOutput || '';
+
+      if (stdout && stdout.trim().length > 0) {
+        setOutput(stdout + (stderr && stderr.trim().length > 0 ? `\n\n--- Standard Error / Diagnostics ---\n${stderr}` : ''));
+      } else if (stderr && stderr.trim().length > 0) {
+        setOutput(`--- Error / Compiler Output ---\n${stderr}`);
+      } else {
+        setOutput('(Execution finished successfully with no output produced)');
+      }
     } catch (err: any) {
       setOutput(`Error: ${err.message}`);
     } finally {

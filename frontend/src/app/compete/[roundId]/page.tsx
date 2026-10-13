@@ -1016,10 +1016,14 @@ export default function CompeteArenaPage() {
     setOverallStatus('RUNNING');
 
     try {
+      // If user hasn't provided custom input, fall back to the challenge's sample test case input
+      const sampleInput = activeQuestion?.testCases?.find((t: any) => !t.isHidden)?.input || '';
+      const inputToUse = (customInput && customInput.trim().length > 0) ? customInput : sampleInput;
+
       const res = await api.submissions.runPlayground({
         language: round?.language || 'python',
         sourceCode: code,
-        customInput: customInput || undefined
+        customInput: inputToUse
       });
 
       const nextCount = activeQuestionRunsUsed + 1;
@@ -1029,10 +1033,31 @@ export default function CompeteArenaPage() {
       } catch (e) {}
 
       const remaining = Math.max(0, MAX_RUNS_PER_CHALLENGE - nextCount);
-      setConsoleOutput(
-        `Execution Status: ${res.status}\nExit Code: ${res.exitCode}\nExecution Time: ${res.executionTimeMs}ms\n\n--- Standard Output ---\n${res.stdout || '(no output)'}\n${res.stderr ? `\n--- Standard Error ---\n${res.stderr}` : ''}\n\nNotice: ${remaining} of ${MAX_RUNS_PER_CHALLENGE} test runs remaining for this challenge.`
-      );
-      setOverallStatus(res.overallStatus || (res.exitCode === 0 ? 'PASSED' : 'FAILED'));
+      const firstResult = res.results?.[0];
+      const stdout = (res.stdout !== undefined && res.stdout !== null)
+        ? res.stdout
+        : (firstResult?.actualOutput ?? '');
+      const stderr = res.stderr || firstResult?.error || res.compileOutput || '';
+      const status = res.status || res.overallStatus || firstResult?.status || 'COMPLETED';
+      const execTime = res.executionTimeMs || firstResult?.executionTimeMs || 0;
+      const exitCode = res.exitCode !== undefined ? res.exitCode : (status === 'PASSED' ? 0 : 1);
+
+      let outputMsg = `Execution Status: ${status}\nExit Code: ${exitCode}\nExecution Time: ${execTime}ms\n\n`;
+      if (inputToUse && inputToUse.trim().length > 0) {
+        outputMsg += `--- Input Provided ---\n${inputToUse}\n\n`;
+      }
+      if (stdout && stdout.trim().length > 0) {
+        outputMsg += `--- Standard Output ---\n${stdout}\n`;
+      } else {
+        outputMsg += `--- Standard Output ---\n(no output produced by program)\n`;
+      }
+      if (stderr && stderr.trim().length > 0) {
+        outputMsg += `\n--- Standard Error / Compiler Output ---\n${stderr}\n`;
+      }
+      outputMsg += `\nNotice: ${remaining} of ${MAX_RUNS_PER_CHALLENGE} test runs remaining for this challenge.`;
+
+      setConsoleOutput(outputMsg);
+      setOverallStatus(res.overallStatus || (exitCode === 0 ? 'PASSED' : 'FAILED'));
     } catch (err: any) {
       setConsoleOutput(`Execution Error: ${err.message}`);
       setOverallStatus('ERROR');

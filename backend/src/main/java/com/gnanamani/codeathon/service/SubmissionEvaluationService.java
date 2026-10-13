@@ -290,10 +290,10 @@ public class SubmissionEvaluationService {
         tc.put("isHidden", false);
 
         Map<String, Object> runnerRequest = new HashMap<>();
-        runnerRequest.put("language", language.toLowerCase());
-        runnerRequest.put("sourceCode", sourceCode);
+        runnerRequest.put("language", language != null ? language.toLowerCase() : "python");
+        runnerRequest.put("sourceCode", sourceCode != null ? sourceCode : "");
         runnerRequest.put("testCases", List.of(tc));
-        runnerRequest.put("timeLimitMs", 3000);
+        runnerRequest.put("timeLimitMs", 5000);
         runnerRequest.put("memoryLimitMb", 128);
 
         HttpHeaders headers = new HttpHeaders();
@@ -301,6 +301,35 @@ public class SubmissionEvaluationService {
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(runnerRequest, headers);
 
         ResponseEntity<Map> response = restTemplate.postForEntity(codeRunnerUrl + "/execute", entity, Map.class);
-        return response.getBody();
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        if (body != null) {
+            Map<String, Object> enriched = new HashMap<>(body);
+            List<Map<String, Object>> results = (List<Map<String, Object>>) body.get("results");
+            String stdout = "";
+            String stderr = "";
+            int exitCode = 0;
+            if (results != null && !results.isEmpty()) {
+                Map<String, Object> first = results.get(0);
+                stdout = (String) first.getOrDefault("actualOutput", "");
+                stderr = (String) first.getOrDefault("error", "");
+                if (stderr == null) stderr = "";
+            }
+            String compileOutput = (String) body.getOrDefault("compileOutput", "");
+            if (compileOutput != null && !compileOutput.isEmpty()) {
+                stderr = stderr.isEmpty() ? compileOutput : stderr + "\n" + compileOutput;
+                exitCode = 1;
+            }
+            String overallStatus = (String) body.getOrDefault("overallStatus", "PASSED");
+            if (!"PASSED".equals(overallStatus)) {
+                exitCode = 1;
+            }
+
+            enriched.put("stdout", stdout);
+            enriched.put("stderr", stderr);
+            enriched.put("status", overallStatus);
+            enriched.put("exitCode", exitCode);
+            return enriched;
+        }
+        return body;
     }
 }
