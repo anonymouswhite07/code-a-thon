@@ -79,26 +79,6 @@ public class SubmissionEvaluationService {
             throw new IllegalStateException("Question is permanently locked and cannot be submitted.");
         }
 
-        // Sequential progression check: all prior questions in round must have >= 1 submission or be locked
-        List<Question> roundQuestions = questionOrderingService.getOrderedQuestionsForParticipant(participant, round);
-        int targetIndex = -1;
-        for (int i = 0; i < roundQuestions.size(); i++) {
-            if (roundQuestions.get(i).getId().equals(question.getId())) {
-                targetIndex = i;
-                break;
-            }
-        }
-        if (targetIndex > 0) {
-            for (int i = 0; i < targetIndex; i++) {
-                Question priorQ = roundQuestions.get(i);
-                boolean isPriorLocked = lockRepository.existsByParticipantIdAndQuestionIdAndIsLockedTrue(participant.getId(), priorQ.getId());
-                long priorSubCount = submissionRepository.countByParticipantIdAndQuestionId(participant.getId(), priorQ.getId());
-                if (priorSubCount == 0 && !isPriorLocked) {
-                    throw new IllegalStateException("You must submit at least 1 solution for Question " + (i + 1) + " before attempting Question " + (targetIndex + 1) + ".");
-                }
-            }
-        }
-
         List<Submission> priorSubs = submissionRepository.findByParticipantIdAndQuestionIdOrderBySubmissionTimeDesc(
                 participant.getId(), question.getId());
         if (priorSubs.size() >= 4) {
