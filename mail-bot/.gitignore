@@ -1,0 +1,12 @@
+# Environment files
+.env
+.env.local
+
+# Generated previews and logs
+preview.html
+event.ics
+mail_bot.log
+
+# Dependencies
+node_modules/
+npm-debug.log*

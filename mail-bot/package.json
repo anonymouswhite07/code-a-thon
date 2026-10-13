@@ -1,0 +1,17 @@
+{
+  "name": "gct-mail-bot",
+  "version": "1.0.0",
+  "description": "Automated Event Invitation Mail Bot for GCT Code-A-Thon 2026",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js",
+    "preview": "node bot.js --preview",
+    "test-send": "node bot.js --test",
+    "send-all": "node bot.js --all"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "nodemailer": "^6.9.15",
+    "pg": "^8.13.0"
+  }
+}
