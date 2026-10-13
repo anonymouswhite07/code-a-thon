@@ -120,7 +120,7 @@ export const ChapterCode: React.FC = () => {
           <div className="p-4 sm:p-5 border-b border-white/10 flex flex-wrap items-center justify-between gap-4 bg-[#202020]">
             <div className="flex items-center gap-2">
               <span className="text-xs font-mono font-black uppercase text-gray-400 mr-2">Language:</span>
-              {(['c', 'python', 'java'] as const).map((l) => (
+              {(['c', 'java', 'python'] as const).map((l) => (
                 <button
                   key={l}
                   onClick={() => handleLangChange(l)}
@@ -130,7 +130,7 @@ export const ChapterCode: React.FC = () => {
                       : 'bg-white/5 hover:bg-white/10 text-gray-300'
                   }`}
                 >
-                  {l === 'c' ? 'C Foundation' : l === 'python' ? 'Python 3' : 'Java 17'}
+                  {l === 'c' ? '01. C Foundation' : l === 'java' ? '02. Java Logic' : '03. Python Master'}
                 </button>
               ))}
             </div>
@@ -222,7 +222,7 @@ export const ChapterCode: React.FC = () => {
             Advance to the 3 Competition Rounds <ArrowDown className="w-3.5 h-3.5" />
           </a>
           <span className="text-xs font-mono text-gray-500">
-            Next: C Foundation, Python Logic, Java Mastery
+            Next: C Foundation, Java Logic, Python Mastery
           </span>
         </div>
       </div>

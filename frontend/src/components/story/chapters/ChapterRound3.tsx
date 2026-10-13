@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { CheckCircle, ArrowRight, Laptop } from 'lucide-react';
 import { CodeMascot } from '@/components/mascot/CodeMascot';
-import { SteamingMugIcon } from '@/components/icons/CustomIcons';
+import { AlgorithmicSnakeIcon } from '@/components/icons/CustomIcons';
 
 interface ChapterRound3Props {
   roundData?: {
@@ -38,32 +38,32 @@ export const ChapterRound3: React.FC<ChapterRound3Props> = ({ roundData }) => {
                 Chapter 05 — Final Battle
               </span>
               <span className="font-mono text-xs font-bold text-[#FFD84D] uppercase tracking-wider">
-                Round 03 — Java: The Master
+                Round 03 — Python: The Master
               </span>
             </div>
 
             <div className="flex items-center gap-2 text-xs font-mono text-gray-400">
-              <SteamingMugIcon size={18} />
+              <AlgorithmicSnakeIcon size={18} />
               <span>Midnight Grind &bull; Final Sprint</span>
             </div>
           </div>
 
           <div className="space-y-2">
             <h2 className="text-6xl sm:text-8xl md:text-9xl font-black text-white font-display tracking-tighter leading-none">
-              JAVA
+              PYTHON
             </h2>
             <p className="text-2xl sm:text-3xl font-black text-[#FFD84D] uppercase tracking-tight">
               THE MASTER. CONQUER THE FINAL TEST CASE.
             </p>
             <p className="text-sm sm:text-base text-gray-300 max-w-2xl font-medium leading-relaxed">
-              Enterprise architecture, multithreading synchronization, and industrial-strength algorithms. The arena narrows down to the finalists. One more test case stands between you and the podium.
+              Algorithmic intuition, rapid list comprehensions, frequency hash maps, and dynamic programming. The arena narrows down to the finalists. One more test case stands between you and the podium.
             </p>
           </div>
         </div>
 
         {/* Cinematic Late Night Desk Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-          {/* Desk Scene & Mascot Card with 3D Coffee Mug */}
+          {/* Desk Scene & Mascot Card with Python Accent */}
           <div data-speed="0.7" className="parallax-layer lg:col-span-6 bg-[#1A1D24] p-6 sm:p-8 rounded-3xl border border-white/10 flex flex-col justify-between relative">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -77,9 +77,9 @@ export const ChapterRound3: React.FC<ChapterRound3Props> = ({ roundData }) => {
               <div className="p-4 bg-[#FFD84D] text-[#171717] rounded-xl font-mono text-xs transform -rotate-1 shadow-md font-bold space-y-1">
                 <div className="flex items-center justify-between border-b border-[#171717]/20 pb-1">
                   <span>STICKY NOTE #42</span>
-                  <SteamingMugIcon size={16} />
+                  <AlgorithmicSnakeIcon size={16} />
                 </div>
-                <p className="italic pt-1">&ldquo;One more test case... just check null pointers and edge cases at n = 10^5.&rdquo;</p>
+                <p className="italic pt-1">&ldquo;One more test case... watch for boundary anomalies and empty inputs at n = 10^5.&rdquo;</p>
               </div>
 
               {/* Live Backend Specs */}
@@ -93,8 +93,8 @@ export const ChapterRound3: React.FC<ChapterRound3Props> = ({ roundData }) => {
                   <span className="text-lg font-black text-[#FF6B35]">{duration} Mins</span>
                 </div>
                 <div className="p-3 bg-white/5 rounded-xl border border-white/5">
-                  <span className="text-[10px] text-gray-400 block uppercase">JVM Memory</span>
-                  <span className="text-lg font-black text-[#B8E63E]">256 MB</span>
+                  <span className="text-[10px] text-gray-400 uppercase block">Sandbox Memory</span>
+                  <span className="text-lg font-black text-[#B8E63E]">128 MB</span>
                 </div>
               </div>
             </div>
@@ -134,10 +134,10 @@ export const ChapterRound3: React.FC<ChapterRound3Props> = ({ roundData }) => {
                     <span className="w-5 h-5 rounded-full bg-[#B8E63E] text-[#171717] font-black text-[10px] flex items-center justify-center">
                       1
                     </span>
-                    <span className="font-bold text-white uppercase tracking-wider">COMPILE</span>
+                    <span className="font-bold text-white uppercase tracking-wider">EXECUTE</span>
                   </div>
                   <span className="text-[#B8E63E] font-bold flex items-center gap-1">
-                    <CheckCircle className="w-3.5 h-3.5" /> javac 17 Clean
+                    <CheckCircle className="w-3.5 h-3.5" /> Python 3.11 Clean
                   </span>
                 </div>
 
@@ -177,7 +177,7 @@ export const ChapterRound3: React.FC<ChapterRound3Props> = ({ roundData }) => {
                 href={roundData ? `/compete/${roundData.id}` : '/register'}
                 className="w-full sm:w-auto px-7 py-3.5 bg-[#FF6B35] hover:bg-[#ff5517] text-white font-black text-xs uppercase tracking-wider rounded-xl brutal-shadow-hover transition flex items-center justify-center gap-2"
               >
-                {isLive ? 'Enter Java Finale' : 'Register for Competition'} <ArrowRight className="w-4 h-4" />
+                {isLive ? 'Enter Python Finale' : 'Register for Competition'} <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
           </div>

@@ -38,7 +38,7 @@ export const RulesModal: React.FC<RulesModalProps> = ({ isOpen, onClose }) => {
               <Clock className="w-4 h-4 text-[#FF6B35]" /> 1. Sequential 3-Round Format
             </div>
             <p className="text-xs sm:text-sm text-gray-600">
-              The competition consists of Round 01 (C), Round 02 (Python), and Round 03 (Java). Rounds must be completed sequentially within the authoritatively enforced clock window.
+              The competition consists of Round 01 (C), Round 02 (Java), and Round 03 (Python). Rounds must be completed sequentially within the authoritatively enforced clock window.
             </p>
           </div>
 

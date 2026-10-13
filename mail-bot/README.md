@@ -12,7 +12,7 @@
 
 1. **🎨 Brutalist Branded Email Template**:
    - Modern, responsive HTML email matching the collegiate arena design.
-   - Highlights the 3 challenge stages: Round 1 (C Programming), Round 2 (Python Sprint), and Round 3 (Java Finale).
+   - Highlights the 3 challenge stages: Round 1 (C Programming), Round 2 (Java Logic), and Round 3 (Python Finale).
    - Prominently showcases **Department of IT**, **Coding Club**, **D Block IT Lab - 2**, and reporting time **10:00 AM (14.10.26)**.
    - Displays direct CTA buttons to the Login & Portal pages and contest rules.
 

@@ -17,7 +17,7 @@ export const RulesSection: React.FC = () => {
     },
     {
       title: 'Round Sequential Unlocking',
-      desc: 'Participants must participate in Round 01 (C) to qualify for Round 02 (Python) and Round 03 (Java). Scores accumulate toward the grand championship.'
+      desc: 'Participants must participate in Round 01 (C) to qualify for Round 02 (Java) and Round 03 (Python). Scores accumulate toward the grand championship.'
     }
   ];
 

@@ -40,7 +40,7 @@ export const Footer: React.FC = () => {
               <span className="w-2 h-2 bg-[#B8E63E] rounded-full"></span> Competition
             </h4>
             <ul className="space-y-2 text-sm text-gray-400 font-medium">
-              <li><Link href="/#rounds" className="hover:text-white transition-colors">Three Rounds (C, Python, Java)</Link></li>
+              <li><Link href="/#rounds" className="hover:text-white transition-colors">Three Rounds (C, Java, Python)</Link></li>
               <li><Link href="/#playground" className="hover:text-white transition-colors">Code Playground</Link></li>
               <li><Link href="/#schedule" className="hover:text-white transition-colors">Timeline & Schedule</Link></li>
               <li><Link href="/#leaderboard" className="hover:text-white transition-colors">Live Leaderboard</Link></li>

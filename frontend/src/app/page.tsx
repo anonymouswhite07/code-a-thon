@@ -87,8 +87,8 @@ export default function Home() {
   }, []);
 
   const round1Data = rounds.find((r) => r.roundNumber === 1 || r.language?.toUpperCase() === 'C');
-  const round2Data = rounds.find((r) => r.roundNumber === 2 || r.language?.toUpperCase() === 'PYTHON');
-  const round3Data = rounds.find((r) => r.roundNumber === 3 || r.language?.toUpperCase() === 'JAVA');
+  const round2Data = rounds.find((r) => r.roundNumber === 2 || r.language?.toUpperCase() === 'JAVA');
+  const round3Data = rounds.find((r) => r.roundNumber === 3 || r.language?.toUpperCase() === 'PYTHON');
 
   const liveRound = rounds.find((r) => r.status === 'LIVE' || r.status === 'IN_PROGRESS');
   const targetRound = liveRound || round1Data || rounds[0];

@@ -121,7 +121,7 @@ export const ChapterRound1: React.FC<ChapterRound1Props> = ({ roundData }) => {
               </h4>
 
               <p className="text-sm text-gray-600 leading-relaxed font-medium">
-                Every coder must prove their foundational grasp before advancing. Passing Round 01 unlocks Round 02: Python.
+                Every coder must prove their foundational grasp before advancing. Passing Round 01 unlocks Round 02: Java.
               </p>
 
               {/* Visual gate toggle animation */}

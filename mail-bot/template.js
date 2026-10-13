@@ -289,14 +289,14 @@ function generateEmailHtml({
               <span class="round-name">Round 02: The Logic</span>
               <div style="font-size: 11px; color: #6B7280;">5 Challenges • 45 Minutes</div>
             </div>
-            <span class="round-lang" style="background-color: #10B981;">Python 3</span>
+            <span class="round-lang" style="background-color: #8B5CF6;">Java 17</span>
           </div>
           <div class="round-item">
             <div>
               <span class="round-name">Round 03: The Master</span>
               <div style="font-size: 11px; color: #6B7280;">5 Challenges • 60 Minutes</div>
             </div>
-            <span class="round-lang" style="background-color: #8B5CF6;">Java 17</span>
+            <span class="round-lang" style="background-color: #10B981;">Python 3</span>
           </div>
         </div>
 

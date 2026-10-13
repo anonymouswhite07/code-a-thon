@@ -81,7 +81,7 @@ export const InteractivePlaygroundDrawer: React.FC<PlaygroundProps> = ({ isOpen,
         {/* Toolbar */}
         <div className="p-3 bg-[#F7F4ED] border-b-2 border-[#171717] flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            {(['c', 'python', 'java'] as const).map((l) => (
+            {(['c', 'java', 'python'] as const).map((l) => (
               <button
                 key={l}
                 onClick={() => handleLangChange(l)}

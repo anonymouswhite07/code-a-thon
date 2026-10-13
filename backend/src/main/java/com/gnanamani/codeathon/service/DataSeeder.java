@@ -118,20 +118,30 @@ public class DataSeeder implements CommandLineRunner {
         });
 
         Round r2 = roundRepository.findByRoundNumber(2).orElseGet(() -> {
-            Round r = new Round(2, "Round 02 — Python", "The Logic", "PYTHON",
-                    "Think smarter, solve faster. Tackle string processing, lists, frequency counting, and algorithms.", 45);
+            Round r = new Round(2, "Round 02 — Java", "The Logic", "JAVA",
+                    "Apply structured OOP logic, arrays, and standard algorithms to conquer the competition podium.", 45);
             r.setStatus("SCHEDULED");
             r.setIsLocked(true);
             return roundRepository.save(r);
         });
+        r2.setTitle("Round 02 — Java");
+        r2.setSubtitle("The Logic");
+        r2.setLanguage("JAVA");
+        r2.setDescription("Apply structured OOP logic, arrays, and standard algorithms to conquer the competition podium.");
+        r2 = roundRepository.save(r2);
 
         Round r3 = roundRepository.findByRoundNumber(3).orElseGet(() -> {
-            Round r = new Round(3, "Round 03 — Java", "The Master", "JAVA",
-                    "Apply structured OOP logic, arrays, and standard algorithms to conquer the competition podium.", 60);
+            Round r = new Round(3, "Round 03 — Python", "The Master", "PYTHON",
+                    "Think smarter, solve faster. Tackle string processing, lists, frequency counting, and algorithms.", 60);
             r.setStatus("SCHEDULED");
             r.setIsLocked(true);
             return roundRepository.save(r);
         });
+        r3.setTitle("Round 03 — Python");
+        r3.setSubtitle("The Master");
+        r3.setLanguage("PYTHON");
+        r3.setDescription("Think smarter, solve faster. Tackle string processing, lists, frequency counting, and algorithms.");
+        r3 = roundRepository.save(r3);
 
         // 4. Remove previous questions and related dependencies
         eventRepository.deleteAll();
@@ -255,11 +265,11 @@ public class DataSeeder implements CommandLineRunner {
         testCaseRepository.save(new TestCase(q1_5, "5\\n-100 -200 -300 -400 -50\\n", "-50", true, 5));
 
         // =========================================================================
-        // 6. ROUND 2 — PYTHON PROGRAMMING (FROM DOCX)
+        // 6. ROUND 3 — PYTHON PROGRAMMING (FROM DOCX)
         // =========================================================================
 
         Question q2_1 = new Question();
-        q2_1.setRound(r2);
+        q2_1.setRound(r3);
         q2_1.setTitle("Array: Second Largest Distinct Element");
         q2_1.setSlug("second-largest-distinct-element");
         q2_1.setDescription("Given an integer array `nums`, return the second-largest distinct element in the array.\\n\\nIf a second-largest distinct element does not exist (e.g. all elements are identical, or array has < 2 distinct values), return `-1`.\\n\\nYou must solve the problem without sorting the array.");
@@ -281,7 +291,7 @@ public class DataSeeder implements CommandLineRunner {
         testCaseRepository.save(new TestCase(q2_1, "100 200 300 300 200\\n", "200", true, 6));
 
         Question q2_2 = new Question();
-        q2_2.setRound(r2);
+        q2_2.setRound(r3);
         q2_2.setTitle("Marksheet: Student Grade Analyzer");
         q2_2.setSlug("student-grade-analyzer");
         q2_2.setDescription("You are given a list of five subject marks for a student. Each mark is an integer between 0 and 100.\\n\\nWrite a program that calculates:\\n1. Total marks.\\n2. Average percentage out of 100 (rounded to two decimal places).\\n3. Grade based on rules:\\n- 90–100: A\\n- 80–89: B\\n- 70–79: C\\n- 60–69: D\\n- Below 60: F\\n\\nIf any subject mark is below 35, the student must receive grade F, regardless of the average.\\n\\nReturn the formatted tuple `(Total, Average, 'Grade')`.");
@@ -303,7 +313,7 @@ public class DataSeeder implements CommandLineRunner {
         testCaseRepository.save(new TestCase(q2_2, "40 45 50 55 34\\n", "(224, 44.80, 'F')", true, 6));
 
         Question q2_3 = new Question();
-        q2_3.setRound(r2);
+        q2_3.setRound(r3);
         q2_3.setTitle("String Slicing: Extract and Reverse a Substring");
         q2_3.setSlug("string-slicing-extract-reverse");
         q2_3.setDescription("Given a string $s$ and two integers `start` and `end`, extract the substring from index `start` up to, but not including, index `end` ($s[start:end]$).\\n\\nThen reverse the extracted substring and return the result.\\nIf `start` or `end` is negative, interpret it using Python's negative-indexing rules.\\n\\nUse Python slicing. Do not use loops to reverse the substring.");
@@ -324,7 +334,7 @@ public class DataSeeder implements CommandLineRunner {
         testCaseRepository.save(new TestCase(q2_3, "CodeAThon\\n1 5\\n", "Aedo", true, 5));
 
         Question q2_4 = new Question();
-        q2_4.setRound(r2);
+        q2_4.setRound(r3);
         q2_4.setTitle("Calculator: Expression Evaluator");
         q2_4.setSlug("calculator-expression-evaluator");
         q2_4.setDescription("Implement a basic calculator function `calculator(a, b, operator)` that takes two numbers and an operator string.\\n\\nSupported operators:\\n- `+` for addition\\n- `-` for subtraction\\n- `*` for multiplication\\n- `/` for division\\n- `%` for modulus\\n- `**` for exponentiation\\n\\nIf the operator is not one of the supported operators, return `Invalid operator`.\\nIf division or modulus by zero is attempted (b == 0), return `Division by zero`.\\n\\nDo not use eval().");
@@ -348,7 +358,7 @@ public class DataSeeder implements CommandLineRunner {
         testCaseRepository.save(new TestCase(q2_4, "10 5 ^\\n", "Invalid operator", true, 8));
 
         Question q2_5 = new Question();
-        q2_5.setRound(r2);
+        q2_5.setRound(r3);
         q2_5.setTitle("Functions: Analyze a Number List");
         q2_5.setSlug("analyze-number-list");
         q2_5.setDescription("Write a function named `analyze_numbers(nums)` that accepts a list of integers and returns a tuple containing:\\n1. The sum of all elements.\\n2. The arithmetic mean, rounded to two decimal places.\\n3. The largest element.\\n4. The smallest element.\\n5. The count of even numbers.\\n\\nIf the list is empty, return `Empty list`.");
@@ -369,11 +379,11 @@ public class DataSeeder implements CommandLineRunner {
         testCaseRepository.save(new TestCase(q2_5, "-5 0 5\\n", "(0, 0.0, 5, -5, 1)", true, 5));
 
         // =========================================================================
-        // 7. ROUND 3 — JAVA PROGRAMMING (FROM DOCX)
+        // 7. ROUND 2 — JAVA PROGRAMMING (FROM DOCX)
         // =========================================================================
 
         Question q3_1 = new Question();
-        q3_1.setRound(r3);
+        q3_1.setRound(r2);
         q3_1.setTitle("Product of Array Except Self");
         q3_1.setSlug("product-of-array-except-self");
         q3_1.setDescription("Given an integer array `nums`, return an array `answer` such that `answer[i]` equals the product of every element in `nums` except `nums[i]`.\\n\\nYou must solve the problem without using division and in $O(n)$ time complexity.");
@@ -394,7 +404,7 @@ public class DataSeeder implements CommandLineRunner {
         testCaseRepository.save(new TestCase(q3_1, "5 0 2\\n", "[0, 10, 0]", true, 5));
 
         Question q3_2 = new Question();
-        q3_2.setRound(r3);
+        q3_2.setRound(r2);
         q3_2.setTitle("Longest Substring Without Repeating Characters");
         q3_2.setSlug("longest-substring-without-repeating");
         q3_2.setDescription("Given a string $s$, find the length of the longest substring that contains no repeated characters.\\n\\nA substring must consist of consecutive characters from the original string. Your solution must run in $O(n)$ time.");
@@ -415,7 +425,7 @@ public class DataSeeder implements CommandLineRunner {
         testCaseRepository.save(new TestCase(q3_2, "abcdefg\\n", "7", true, 5));
 
         Question q3_3 = new Question();
-        q3_3.setRound(r3);
+        q3_3.setRound(r2);
         q3_3.setTitle("3Sum");
         q3_3.setSlug("three-sum");
         q3_3.setDescription("Given an integer array `nums`, return all unique triplets `[nums[i], nums[j], nums[k]]` such that:\\n- i, j, and k are distinct indices.\\n- nums[i] + nums[j] + nums[k] == 0.\\n\\nThe result must not contain duplicate triplets.\\nYour solution should run in $O(n^2)$ time.");
@@ -436,7 +446,7 @@ public class DataSeeder implements CommandLineRunner {
         testCaseRepository.save(new TestCase(q3_3, "1 2 -2 -1\\n", "[]", true, 5));
 
         Question q3_4 = new Question();
-        q3_4.setRound(r3);
+        q3_4.setRound(r2);
         q3_4.setTitle("Number of Islands");
         q3_4.setSlug("number-of-islands");
         q3_4.setDescription("You are given a 2D grid consisting of '1' (land) and '0' (water).\\nAn island is a group of connected land cells. Cells are connected horizontally or vertically, but not diagonally.\\n\\nReturn the total number of islands in the grid.\\nYour solution must use Depth-First Search (DFS) or Breadth-First Search (BFS).");
@@ -457,7 +467,7 @@ public class DataSeeder implements CommandLineRunner {
         testCaseRepository.save(new TestCase(q3_4, "3 3\\n1 0 1\\n0 1 0\\n1 0 1\\n", "5", true, 5));
 
         Question q3_5 = new Question();
-        q3_5.setRound(r3);
+        q3_5.setRound(r2);
         q3_5.setTitle("LRU Cache Design");
         q3_5.setSlug("lru-cache-design");
         q3_5.setDescription("Design a data structure that follows the Least Recently Used (LRU) cache policy.\\n\\nImplement the class `LRUCache` with operations:\\n- `LRUCache(int capacity)`: Initialize cache with positive capacity.\\n- `int get(int key)`: Return value if key exists, else -1. Accessing key makes it most recently used.\\n- `void put(int key, int value)`: Insert or update key-value. If capacity exceeded, evict the least recently used entry.\\n\\nBoth get and put must run in O(1) average time.");
@@ -493,7 +503,7 @@ public class DataSeeder implements CommandLineRunner {
             ));
 
             announcementRepository.save(new Announcement(
-                    "Round 02 Python Schedule Update",
+                    "Round 02 Java Schedule Update",
                     "Round 02 (The Logic) is scheduled to unlock immediately following the evaluation window of Round 01. Keep your terminal ready!",
                     "SCHEDULE",
                     r2.getId(),

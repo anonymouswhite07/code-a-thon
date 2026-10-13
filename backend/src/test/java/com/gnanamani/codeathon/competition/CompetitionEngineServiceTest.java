@@ -100,11 +100,11 @@ class CompetitionEngineServiceTest {
     @Test
     @DisplayName("Submissions rejected when round is not LIVE or time expired")
     void testSubmissionAllowedRejection() {
-        Round scheduled = new Round(2, "Round 2", "Logic", "PYTHON", "Desc", 45);
+        Round scheduled = new Round(2, "Round 2", "Logic", "JAVA", "Desc", 45);
         scheduled.setStatus("SCHEDULED");
         assertFalse(competitionEngineService.isSubmissionAllowed(scheduled));
 
-        Round ended = new Round(3, "Round 3", "Master", "JAVA", "Desc", 60);
+        Round ended = new Round(3, "Round 3", "Master", "PYTHON", "Desc", 60);
         ended.setStatus("ENDED");
         ended.setEndTime(LocalDateTime.now().minusMinutes(5));
         assertFalse(competitionEngineService.isSubmissionAllowed(ended));

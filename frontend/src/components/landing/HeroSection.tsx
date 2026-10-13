@@ -134,11 +134,11 @@ export const HeroSection: React.FC = () => {
                   <span className="px-2.5 py-1 bg-[#F7F4ED] text-[#171717] rounded brutal-border text-xs font-mono font-black">
                     01. C
                   </span>
-                  <span className="px-2.5 py-1 bg-[#3155FF] text-white rounded brutal-border text-xs font-mono font-black">
-                    02. PYTHON
+                  <span className="px-2.5 py-1 bg-[#8B5CF6] text-white rounded brutal-border text-xs font-mono font-black">
+                    02. JAVA
                   </span>
                   <span className="px-2.5 py-1 bg-[#FF6B35] text-white rounded brutal-border text-xs font-mono font-black">
-                    03. JAVA
+                    03. PYTHON
                   </span>
                 </div>
                 <span className="text-xs font-bold text-gray-500 font-mono">100% LIVE</span>

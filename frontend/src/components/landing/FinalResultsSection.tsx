@@ -130,7 +130,7 @@ export const FinalResultsSection: React.FC = () => {
                     {winners[0]?.totalScore} PTS
                   </div>
                   <div className="text-xs font-bold font-mono bg-white/50 py-1 px-3 rounded brutal-border inline-block">
-                    Full Clear: C, Python, Java
+                    Full Clear: C, Java, Python
                   </div>
                 </div>
 

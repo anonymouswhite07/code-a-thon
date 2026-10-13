@@ -162,7 +162,7 @@ export const CodePlaygroundSection: React.FC = () => {
             <div className="flex items-center gap-3">
               <span className="text-xs font-mono font-bold text-gray-400 uppercase">Select Language:</span>
               <div className="flex items-center gap-2">
-                {(['c', 'python', 'java'] as const).map((l) => (
+                {(['c', 'java', 'python'] as const).map((l) => (
                   <button
                     key={l}
                     onClick={() => handleLangChange(l)}
@@ -172,7 +172,7 @@ export const CodePlaygroundSection: React.FC = () => {
                         : 'bg-white/10 text-gray-300 hover:bg-white/20'
                     }`}
                   >
-                    {l === 'c' ? '01. C' : l === 'python' ? '02. Python' : '03. Java'}
+                    {l === 'c' ? '01. C' : l === 'java' ? '02. Java' : '03. Python'}
                   </button>
                 ))}
               </div>

@@ -20,17 +20,17 @@ export const ScheduleSection: React.FC = () => {
     },
     {
       time: '11:00 AM – 11:45 AM',
-      title: 'ROUND 02 — PYTHON: THE LOGIC',
-      desc: 'Algorithmic efficiency, string parsing, sorting, and graph search. Top 25% qualify.',
+      title: 'ROUND 02 — JAVA: THE LOGIC',
+      desc: 'Enterprise structures, OOP architecture, two-pointer sweeps, and graph BFS. Top 25% qualify.',
       status: 'UPCOMING',
-      badge: '#FF6B35'
+      badge: '#8B5CF6'
     },
     {
       time: '01:30 PM – 02:30 PM',
-      title: 'ROUND 03 — JAVA: THE MASTER',
-      desc: 'Enterprise structures, OOP architecture, and dynamic programming.',
+      title: 'ROUND 03 — PYTHON: THE MASTER',
+      desc: 'Algorithmic efficiency, rapid string parsing, list comprehension mastery, and dynamic programming.',
       status: 'UPCOMING',
-      badge: '#FFD84D'
+      badge: '#FF6B35'
     },
     {
       time: '03:15 PM – 04:30 PM',

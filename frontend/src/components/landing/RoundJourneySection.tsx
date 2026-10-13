@@ -21,26 +21,26 @@ export const RoundJourneySection: React.FC = () => {
     },
     {
       num: '02',
-      lang: 'PYTHON',
+      lang: 'JAVA',
       subtitle: 'THE LOGIC',
-      color: '#FF6B35',
-      bgLight: '#FFF2EC',
-      desc: 'Think smarter, solve faster. Dynamic arrays, dictionaries, greedy heuristics, and algorithmic efficiency.',
-      icon: <Cpu className="w-8 h-8 text-[#FF6B35]" />,
-      snippet: 'def solve(nums):\n    return [x**2 for x in nums]\nprint(solve([1,2,3]))',
+      color: '#8B5CF6',
+      bgLight: '#F5F3FF',
+      desc: 'Apply structured OOP logic, collections, robust array manipulation, and enterprise algorithmic design.',
+      icon: <Coffee className="w-8 h-8 text-[#8B5CF6]" />,
+      snippet: 'public class Main {\n  public static void main(String[] args){\n    System.out.println("Logic");\n  }\n}',
       status: 'SCHEDULED',
       statusColor: '#FFD84D',
       stats: '45 Mins • 100-200 Pts'
     },
     {
       num: '03',
-      lang: 'JAVA',
+      lang: 'PYTHON',
       subtitle: 'THE MASTER',
-      color: '#171717',
-      bgLight: '#F3F4F6',
-      desc: 'Apply. Build. Conquer. OOP structures, robust exception handling, and enterprise algorithmic design.',
-      icon: <Coffee className="w-8 h-8 text-[#FF6B35]" />,
-      snippet: 'public class Main {\n  public static void main(String[] args){\n    System.out.println("Champion");\n  }\n}',
+      color: '#FF6B35',
+      bgLight: '#FFF2EC',
+      desc: 'Think smarter, solve faster. Dynamic arrays, dictionaries, greedy heuristics, and rapid algorithmic efficiency.',
+      icon: <Cpu className="w-8 h-8 text-[#FF6B35]" />,
+      snippet: 'def solve(nums):\n    return [x**2 for x in nums]\nprint(solve([1,2,3]))',
       status: 'LOCKED',
       statusColor: '#9CA3AF',
       stats: '60 Mins • 150-250 Pts'
@@ -65,9 +65,9 @@ export const RoundJourneySection: React.FC = () => {
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-white brutal-border brutal-shadow-sm rounded-full text-xs font-mono font-bold mt-2">
           <span className="text-[#3155FF]">01 C</span>
           <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
-          <span className="text-[#FF6B35]">02 PYTHON</span>
+          <span className="text-[#8B5CF6]">02 JAVA</span>
           <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
-          <span className="text-[#171717]">03 JAVA</span>
+          <span className="text-[#FF6B35]">03 PYTHON</span>
           <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
           <span className="text-yellow-600 font-black">🏆 PODIUM</span>
         </div>
