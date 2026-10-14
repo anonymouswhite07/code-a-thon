@@ -476,19 +476,7 @@ public class IntegrityService {
         Question nextQ = questionRepository.findById(request.getNextQuestionId())
                 .orElseThrow(() -> new IllegalArgumentException("Next question not found: " + request.getNextQuestionId()));
 
-        // 1. Enforce requirement: At least 1 submission must be completed before leaving current question
-        long subCount = submissionRepository.countByParticipantIdAndQuestionId(participant.getId(), currentQ.getId());
-        if (subCount < 1) {
-            throw new IllegalStateException("You must submit at least 1 solution for Question #" + currentQ.getId() + " before moving to the next challenge.");
-        }
-
-        // 2. Permanently lock current question for participant
-        if (!lockRepository.existsByParticipantIdAndQuestionIdAndIsLockedTrue(participant.getId(), currentQ.getId())) {
-            ParticipantQuestionLock lock = new ParticipantQuestionLock(participant, round, currentQ, "ADVANCED_TO_NEXT_QUESTION");
-            lockRepository.save(lock);
-        }
-
-        // 3. Update session current question
+        // Update session current question
         List<CompetitionSession> sessions = sessionRepository.findByRoundIdOrderByStartedAtDesc(round.getId())
                 .stream()
                 .filter(s -> s.getParticipant().getId().equals(participant.getId()))
@@ -501,8 +489,8 @@ public class IntegrityService {
 
             IntegrityEvent advEvent = new IntegrityEvent(
                     participant, session.getSessionToken(), round, currentQ,
-                    "QUESTION_ADVANCED",
-                    "Participant completed Question #" + currentQ.getId() + " and advanced to Question #" + nextQ.getId() + ". Previous question is permanently locked.",
+                    "QUESTION_SWITCHED",
+                    "Participant navigated from Question #" + currentQ.getId() + " to Question #" + nextQ.getId(),
                     null, ipAddress
             );
             eventRepository.save(advEvent);
@@ -516,10 +504,9 @@ public class IntegrityService {
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("success", true);
-        result.put("lockedQuestionId", currentQ.getId());
         result.put("activeQuestionId", nextQ.getId());
         result.put("lockedQuestionIds", lockedQuestionIds);
-        result.put("message", "Question #" + currentQ.getId() + " is now locked. Advanced to Question #" + nextQ.getId() + ".");
+        result.put("message", "Navigated to Question #" + nextQ.getId());
         return result;
     }
 }

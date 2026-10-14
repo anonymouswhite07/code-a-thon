@@ -233,6 +233,17 @@ export const api = {
       return fetchWithAuth(`/judge/submissions${query ? `?${query}` : ''}`);
     },
     getDetail: (id: number) => fetchWithAuth(`/judge/submissions/${id}`),
+    updateScore: (id: number, score: number, status?: string, remarks?: string) =>
+      fetchWithAuth(`/judge/submissions/${id}/score`, {
+        method: 'PUT',
+        body: JSON.stringify({ score, status, remarks }),
+      }),
+    updateParticipantScore: (id: number, score: number, remarks?: string) =>
+      fetchWithAuth(`/judge/participants/${id}/score`, {
+        method: 'PUT',
+        body: JSON.stringify({ score, remarks }),
+      }),
+    getParticipants: () => fetchWithAuth('/judge/participants'),
     getIntegrityEvents: (roundId?: number, participantId?: number) => {
       let query = '';
       if (roundId) query += `roundId=${roundId}&`;

@@ -931,73 +931,24 @@ export default function CompeteArenaPage() {
   const currentAttemptNumber = Math.min(MAX_SUBMISSIONS_PER_CHALLENGE, currentQSubsUsed + 1);
   const currentPenalty = wrongSubsCount * RETRY_PENALTY_POINTS;
 
-  // Question advancement handler: enforces 1+ submission on current before moving, and locks previous question
+  // Question navigation handler: allows free navigation between all questions in the round
   const handleSelectOrAdvanceQuestion = async (targetQuestionId: number) => {
     if (!activeQuestion) return;
     if (activeQuestion.id === targetQuestionId) return;
 
-    const curIndex = questions.findIndex(q => q.id === activeQuestion.id);
-    const targetIndex = questions.findIndex(q => q.id === targetQuestionId);
+    // Save current code draft first
+    saveCurrentDraft();
 
-    // Case 1: Attempting to access a previous or already completed/locked question
-    if (targetIndex < curIndex || lockedQuestionsMap[targetQuestionId]) {
-      showCustomAlert(
-        'Challenge Locked & Completed',
-        `🔒 Question #${targetIndex + 1} has already been submitted and locked. Viewing or reopening past questions is strictly restricted during this competition round.`,
-        'warning'
-      );
-      return;
+    // Optionally notify backend session of active question switch
+    if (sessionTokenRef.current) {
+      api.integrity.advanceQuestion({
+        roundId: Number(roundId),
+        currentQuestionId: activeQuestion.id,
+        nextQuestionId: targetQuestionId
+      }).catch(() => {});
     }
 
-    // Case 2: Advancing to future questions requires at least 1 submission on current question
-    if (currentQSubsUsed < 1) {
-      showCustomAlert(
-        'Submission Required',
-        `⚠️ You must submit at least 1 solution for Question #${curIndex + 1} ("${activeQuestion.title}") before moving to the next challenge.`,
-        'warning'
-      );
-      return;
-    }
-
-    // Enforce sequential progression
-    if (targetIndex > curIndex + 1) {
-      showCustomAlert(
-        'Sequential Progression Required',
-        `⚠️ Please advance sequentially. Complete and submit Question #${curIndex + 2} first.`,
-        'warning'
-      );
-      return;
-    }
-
-    showCustomConfirm(
-      `Advance to Question #${targetIndex + 1}`,
-      `Moving to Question #${targetIndex + 1} will PERMANENTLY LOCK Question #${curIndex + 1} ("${activeQuestion.title}").\n\nYou will not be able to edit or submit further solutions for Question #${curIndex + 1}.\n\nAre you sure you want to advance?`,
-      async () => {
-        try {
-          await api.integrity.advanceQuestion({
-            roundId: Number(roundId),
-            currentQuestionId: activeQuestion.id,
-            nextQuestionId: targetQuestionId
-          });
-
-          // Update locked map
-          setLockedQuestionsMap(prev => ({
-            ...prev,
-            [activeQuestion.id]: true
-          }));
-          try {
-            localStorage.setItem(getLockedKey(activeQuestion.id), 'true');
-          } catch (e) {}
-
-          loadQuestionDetail(targetQuestionId);
-        } catch (err: any) {
-          showCustomAlert('Advance Error', `Could not advance question: ${err.message}`, 'danger');
-        }
-      },
-      'Permanently Lock & Advance →',
-      'Stay on Current Question',
-      'confirm'
-    );
+    loadQuestionDetail(targetQuestionId);
   };
 
   // Run against sample input (Max 3 runs)
@@ -1128,7 +1079,7 @@ export default function CompeteArenaPage() {
           setOverallStatus(res.status);
           const penaltyApplied = (res.penalty !== undefined && res.penalty !== null) ? res.penalty : currentPenalty;
           setConsoleOutput(
-            `Submission #${newSubsCount} Evaluated:\nStatus: ${res.status}\nScore: +${res.score} points ${penaltyApplied > 0 ? `(includes -${penaltyApplied} penalty for wrong attempts)` : ''}\nPassed: ${res.passedTestCases}/${res.totalTestCases} test cases\nExecution Time: ${res.executionTimeMs}ms\n${res.compileOutput ? `\nCompiler Logs:\n${res.compileOutput}` : ''}\n\nNotice: At least 1 submission completed for this challenge. You can now submit another attempt (max 4) or click "Next Question" to lock this question and advance.`
+            `Submission #${newSubsCount} Evaluated:\nStatus: ${res.status}\nScore: +${res.score} points ${penaltyApplied > 0 ? `(includes -${penaltyApplied} penalty for wrong attempts)` : ''}\nPassed: ${res.passedTestCases}/${res.totalTestCases} test cases\nExecution Time: ${res.executionTimeMs}ms\n${res.compileOutput ? `\nCompiler Logs:\n${res.compileOutput}` : ''}\n\nNotice: Submission recorded for this challenge. You can submit another attempt (max 4) or switch to any other challenge anytime.`
           );
           fetchSubmissionsForQuestion(activeQuestion.id);
         } catch (err: any) {
@@ -1478,33 +1429,27 @@ export default function CompeteArenaPage() {
                 : `Submit (${currentAttemptNumber}/4)`}
             </button>
 
+            {/* Prev Challenge Button */}
+            {currentQuestionIndex > 0 && (
+              <button
+                onClick={() => handleSelectOrAdvanceQuestion(questions[currentQuestionIndex - 1].id)}
+                title={`Go to Question #${currentQuestionIndex}: ${questions[currentQuestionIndex - 1].title}`}
+                className="px-3 py-1.5 text-xs font-mono font-black uppercase tracking-wider rounded-lg brutal-border brutal-shadow-sm flex items-center gap-1.5 transition-all bg-gray-800 hover:bg-gray-700 text-white brutal-shadow-hover cursor-pointer"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Prev Question</span>
+              </button>
+            )}
+
             {/* Advance to Next Challenge Button */}
             {nextQuestion && (
               <button
                 onClick={() => handleSelectOrAdvanceQuestion(nextQuestion.id)}
-                disabled={currentQSubsUsed < 1}
-                title={
-                  currentQSubsUsed < 1
-                    ? 'Submit at least 1 solution to unlock Next Question'
-                    : `Lock Question #${currentQuestionIndex + 1} and advance to Question #${currentQuestionIndex + 2}`
-                }
-                className={`px-3 py-1.5 text-xs font-mono font-black uppercase tracking-wider rounded-lg brutal-border brutal-shadow-sm flex items-center gap-1.5 transition-all ${
-                  currentQSubsUsed < 1
-                    ? 'bg-gray-800 text-gray-500 border-gray-700 cursor-not-allowed opacity-60'
-                    : 'bg-[#10B981] hover:bg-[#059669] text-white brutal-shadow-hover cursor-pointer'
-                }`}
+                title={`Go to Question #${currentQuestionIndex + 2}: ${nextQuestion.title}`}
+                className="px-3 py-1.5 text-xs font-mono font-black uppercase tracking-wider rounded-lg brutal-border brutal-shadow-sm flex items-center gap-1.5 transition-all bg-[#10B981] hover:bg-[#059669] text-white brutal-shadow-hover cursor-pointer"
               >
-                {currentQSubsUsed < 1 ? (
-                  <>
-                    <Lock className="w-3.5 h-3.5 text-gray-500" />
-                    <span>Next Q (Locked)</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Next Question</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </>
-                )}
+                <span>Next Question</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
@@ -1518,64 +1463,39 @@ export default function CompeteArenaPage() {
             <div className="bg-[#F7F4ED] px-4 py-2 border-b-2 border-[#171717] flex items-center gap-2 overflow-x-auto shrink-0">
               {questions.map((q, idx) => {
                 const isCurrent = activeQuestion?.id === q.id;
-                const isLocked = Boolean(lockedQuestionsMap[q.id] || q.isLocked);
                 const draft = codeDrafts[q.id];
                 const hasDraft = Boolean(draft && draft !== q.starterCode && draft.trim().length > 0);
                 const qRunsUsed = runCounts[q.id] || 0;
                 const qRunsLeft = Math.max(0, MAX_RUNS_PER_CHALLENGE - qRunsUsed);
-                const isPastQuestion = idx < currentQuestionIndex;
-                const isFutureQuestion = idx > currentQuestionIndex;
-                const isFutureLocked = isFutureQuestion && currentQSubsUsed < 1;
+                const qSubs = submissionCounts[q.id] || 0;
 
                 return (
                   <button
                     key={q.id}
                     onClick={() => handleSelectOrAdvanceQuestion(q.id)}
-                    title={
-                      isCurrent
-                        ? 'Current Challenge In Use (Unlocked)'
-                        : isPastQuestion || isLocked
-                        ? 'Challenge Completed & Locked (Viewing Restricted)'
-                        : isFutureLocked
-                        ? 'Locked: Submit at least 1 solution for current challenge to advance'
-                        : 'Click to advance (Will lock current question)'
-                    }
-                    className={`px-3 py-1.5 rounded text-xs font-mono font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                    title={`Question ${idx + 1}: ${q.title} (${q.points}p) - Click to view and solve`}
+                    className={`px-3 py-1.5 rounded text-xs font-mono font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
                       isCurrent
                         ? 'bg-[#171717] text-white brutal-border brutal-shadow-sm ring-2 ring-[#B8E63E]'
-                        : isPastQuestion || isLocked
-                        ? 'bg-gray-100 text-gray-400 border border-gray-300 cursor-not-allowed opacity-60'
-                        : isFutureLocked
-                        ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed opacity-60'
-                        : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-400'
+                        : 'bg-white hover:bg-gray-100 text-[#171717] border border-gray-300'
                     }`}
                   >
                     {isCurrent ? (
                       <span className="w-2 h-2 rounded-full bg-[#B8E63E] animate-pulse" title="Active Question In Use" />
-                    ) : isPastQuestion || isLocked ? (
-                      <span title="Completed & Locked">
-                        <Lock className="w-3 h-3 text-gray-400" />
-                      </span>
-                    ) : isFutureLocked ? (
-                      <span title="Locked - Complete current question">
-                        <Lock className="w-3 h-3 text-gray-400" />
-                      </span>
                     ) : hasDraft ? (
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#B8E63E]" title="Draft saved" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#3155FF]" title="Draft saved" />
                     ) : null}
                     <span>Q{idx + 1}. {q.title.slice(0, 16)}... ({q.points}p)</span>
                     <span
                       className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-black ${
                         isCurrent
                           ? 'bg-[#B8E63E] text-[#171717]'
-                          : isPastQuestion || isLocked
-                          ? 'bg-gray-200 text-gray-500'
-                          : isFutureLocked
-                          ? 'bg-gray-200 text-gray-400'
-                          : 'bg-emerald-200 text-emerald-800'
+                          : qSubs > 0
+                          ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                          : 'bg-gray-100 text-gray-600'
                       }`}
                     >
-                      {isCurrent ? 'IN USE' : isPastQuestion || isLocked ? 'LOCKED' : isFutureLocked ? '🔒' : `${qRunsLeft}/3`}
+                      {isCurrent ? 'IN USE' : qSubs > 0 ? `${qSubs}/4 SUBS` : `${qRunsLeft}/3`}
                     </span>
                   </button>
                 );
