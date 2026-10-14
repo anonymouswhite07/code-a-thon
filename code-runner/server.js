@@ -117,6 +117,19 @@ for (const cand of [
   } catch (e) {}
 }
 
+let pythonCmd = 'python';
+let hasPython = false;
+for (const py of ['python', 'python3', 'py']) {
+  try {
+    execSync(`${py} --version`, { stdio: 'ignore' });
+    pythonCmd = py;
+    hasPython = true;
+    break;
+  } catch (e) {
+    hasPython = false;
+  }
+}
+
 console.log(`[CodeRunner] Environment check: GCC=${hasGcc} (${gccCmd || 'none'}), Java=${hasJava} (${javacCmd}), Python=${hasPython} (${pythonCmd})`);
 
 // Concurrency queue to protect memory on free hosting tiers (e.g. Render 512MB RAM)
