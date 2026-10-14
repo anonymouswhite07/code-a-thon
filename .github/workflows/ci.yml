@@ -49,7 +49,14 @@ jobs:
         run: |
           cd code-runner
           node server.js &
-          sleep 3
+          for i in $(seq 1 30); do
+            if curl -s http://127.0.0.1:5050/health > /dev/null; then
+              echo "Code Runner is UP and healthy on port 5050"
+              break
+            fi
+            echo "Waiting for Code Runner to start... ($i/30)"
+            sleep 1
+          done
           node --test test/runner.test.js
 
   frontend-build:

@@ -33,7 +33,32 @@ function postExecute(payload, port = 5050) {
   });
 }
 
+// Helper to wait for the server to be ready before running tests
+async function waitForServer(url = 'http://127.0.0.1:5050/health', maxRetries = 20, delayMs = 500) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const ok = await new Promise((resolve, reject) => {
+        const req = http.get(url, (r) => {
+          let body = '';
+          r.on('data', c => body += c);
+          r.on('end', () => resolve(r.statusCode === 200));
+        });
+        req.on('error', reject);
+        req.setTimeout(1000, () => req.destroy(new Error('Timeout')));
+      });
+      if (ok) return true;
+    } catch (e) {
+      // Server not ready yet
+    }
+    await new Promise(r => setTimeout(r, delayMs));
+  }
+  throw new Error(`Server failed to start on ${url} within timeout`);
+}
+
 test('Code Runner Test Suite', async (t) => {
+  t.before(async () => {
+    await waitForServer();
+  });
 
   await t.test('Health check responds with UP', async () => {
     const res = await new Promise((resolve, reject) => {
