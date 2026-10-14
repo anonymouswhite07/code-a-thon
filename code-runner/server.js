@@ -88,27 +88,36 @@ const hasGcc = !!gccInfo.cmd;
 const gccCmd = gccInfo.cmd;
 
 let hasJava = false;
-try {
-  execSync('javac -version', { stdio: 'ignore' });
-  hasJava = true;
-} catch (e) {
-  hasJava = false;
-}
-
-let pythonCmd = 'python';
-let hasPython = false;
-for (const py of ['python', 'python3', 'py']) {
+let javacCmd = 'javac';
+for (const cand of [
+  'javac',
+  '/usr/lib/jvm/java-17-openjdk/bin/javac',
+  '/usr/lib/jvm/default-jvm/bin/javac',
+  process.env.JAVA_HOME ? path.join(process.env.JAVA_HOME, 'bin', 'javac') : null
+].filter(Boolean)) {
   try {
-    execSync(`${py} --version`, { stdio: 'ignore' });
-    pythonCmd = py;
-    hasPython = true;
+    execSync(`"${cand}" -version`, { stdio: 'ignore' });
+    javacCmd = cand;
+    hasJava = true;
     break;
-  } catch (e) {
-    hasPython = false;
-  }
+  } catch (e) {}
 }
 
-console.log(`[CodeRunner] Environment check: GCC=${hasGcc} (${gccCmd || 'none'}), Java=${hasJava}, Python=${hasPython} (${pythonCmd})`);
+let javaCmd = 'java';
+for (const cand of [
+  'java',
+  '/usr/lib/jvm/java-17-openjdk/bin/java',
+  '/usr/lib/jvm/default-jvm/bin/java',
+  process.env.JAVA_HOME ? path.join(process.env.JAVA_HOME, 'bin', 'java') : null
+].filter(Boolean)) {
+  try {
+    execSync(`"${cand}" -version`, { stdio: 'ignore' });
+    javaCmd = cand;
+    break;
+  } catch (e) {}
+}
+
+console.log(`[CodeRunner] Environment check: GCC=${hasGcc} (${gccCmd || 'none'}), Java=${hasJava} (${javacCmd}), Python=${hasPython} (${pythonCmd})`);
 
 // Concurrency queue to protect memory on free hosting tiers (e.g. Render 512MB RAM)
 class ExecutionQueue {
@@ -288,24 +297,38 @@ async function executeSubmission({ language, sourceCode, testCases, timeLimitMs 
         });
       }
     } else if (lang === 'java') {
-      // Find class name or replace public class with Main
+      if (!hasJava) {
+        return {
+          overallStatus: 'COMPILE_ERROR',
+          passedTestCases: 0,
+          totalTestCases: testCases.length,
+          scorePercent: 0,
+          executionTimeMs: 0,
+          memoryKb: 0,
+          compileOutput: 'Java compiler (javac) is not available on execution host.',
+          results: []
+        };
+      }
+
+      // Find class name or replace public class / class with Main
       let normalizedCode = sourceCode;
       if (!normalizedCode.includes('class Main')) {
-        normalizedCode = normalizedCode.replace(/public\s+class\s+([A-Za-z0-9_]+)/g, 'public class Main');
+        normalizedCode = normalizedCode.replace(/(?:public\s+)?class\s+([A-Za-z0-9_]+)/, 'public class Main');
       }
       const javaFile = path.join(tempDir, 'Main.java');
       fs.writeFileSync(javaFile, normalizedCode, 'utf8');
 
       // Compile
-      const compRes = await runProcess('javac', ['Main.java'], { cwd: tempDir }, '', 5000);
+      const compRes = await runProcess(javacCmd, ['Main.java'], { cwd: tempDir }, '', 8000);
       if (compRes.exitCode !== 0) {
         compileSuccess = false;
-        compileOutput = compRes.stderr || compRes.stdout;
+        let rawErr = compRes.stderr || compRes.stdout || 'Compilation failed with non-zero exit code.';
+        compileOutput = rawErr.split(tempDir).join('').replace(/^[\\\/]+/, '');
       } else {
         for (const tc of testCases) {
           const input = tc.input || '';
           const expected = normalizeOutput(tc.expectedOutput);
-          const res = await runProcess('java', [`-Xmx${memoryLimitMb}m`, '-Xms16m', 'Main'], { cwd: tempDir }, input, timeLimitMs);
+          const res = await runProcess(javaCmd, [`-Xmx${memoryLimitMb}m`, '-Xms16m', 'Main'], { cwd: tempDir }, input, timeLimitMs);
           maxTimeMs = Math.max(maxTimeMs, res.executionTimeMs);
 
           let status = 'PASSED';

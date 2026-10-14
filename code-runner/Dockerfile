@@ -7,8 +7,12 @@ RUN apk add --no-cache \
     gcc \
     g++ \
     musl-dev \
-    openjdk17 \
+    openjdk17-jdk \
+    openjdk17-jre \
     python3
+
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk
+ENV PATH="$JAVA_HOME/bin:${PATH}"
 
 WORKDIR /runner
 COPY package.json server.js ./

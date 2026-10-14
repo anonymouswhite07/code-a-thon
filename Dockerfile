@@ -20,14 +20,17 @@ FROM alpine:3.19
 
 # Install compilers, interpreters, and runtime tools
 RUN apk add --no-cache \
+    openjdk17-jdk \
     openjdk17-jre \
-    openjdk17 \
     gcc \
     g++ \
     musl-dev \
     python3 \
     nodejs \
     curl
+
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk
+ENV PATH="$JAVA_HOME/bin:${PATH}"
 
 WORKDIR /app
 

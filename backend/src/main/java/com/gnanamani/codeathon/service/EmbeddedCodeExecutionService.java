@@ -22,9 +22,11 @@ public class EmbeddedCodeExecutionService {
 
     private static final Logger log = LoggerFactory.getLogger(EmbeddedCodeExecutionService.class);
 
-    private static final Pattern PUBLIC_CLASS_PATTERN = Pattern.compile("public\\s+class\\s+([A-Za-z0-9_]+)");
+    private static final Pattern ANY_CLASS_PATTERN = Pattern.compile("(?:public\\s+)?class\\s+([A-Za-z0-9_]+)");
     private static final boolean IS_WINDOWS = System.getProperty("os.name", "").toLowerCase().contains("win");
 
+    private volatile String detectedJavacCmd = null;
+    private volatile String detectedJavaCmd = null;
     private volatile String detectedPythonCmd = null;
     private volatile String detectedGccCmd = null;
 
@@ -62,17 +64,26 @@ public class EmbeddedCodeExecutionService {
     }
 
     private Map<String, Object> executeJava(Path tempDir, String sourceCode, List<Map<String, Object>> testCases, int timeLimitMs, int memoryLimitMb) throws IOException {
+        String javac = getJavacCommand();
+        if (javac == null) {
+            return compileErrorResult("Java compiler (javac) is not available on execution host.", testCases.size());
+        }
+        String java = getJavaCommand();
+
         String normalizedCode = sourceCode != null ? sourceCode : "";
         if (!normalizedCode.contains("class Main")) {
-            normalizedCode = PUBLIC_CLASS_PATTERN.matcher(normalizedCode).replaceAll("public class Main");
+            normalizedCode = ANY_CLASS_PATTERN.matcher(normalizedCode).replaceFirst("public class Main");
         }
         Path javaFile = tempDir.resolve("Main.java");
         Files.writeString(javaFile, normalizedCode, StandardCharsets.UTF_8);
 
         // Compile Java code
-        ProcessResult compRes = runCommand(List.of("javac", "Main.java"), tempDir, "", 8000);
+        ProcessResult compRes = runCommand(List.of(javac, "Main.java"), tempDir, "", 8000);
         if (compRes.exitCode != 0) {
             String compileErr = !compRes.stderr.isEmpty() ? compRes.stderr : compRes.stdout;
+            if (compileErr.isEmpty()) {
+                compileErr = "Compilation failed with non-zero exit code: " + compRes.exitCode;
+            }
             return compileErrorResult(compileErr, testCases.size());
         }
 
@@ -86,7 +97,7 @@ public class EmbeddedCodeExecutionService {
             String expected = normalizeOutput(String.valueOf(tc.getOrDefault("expectedOutput", "")));
             boolean isHidden = Boolean.TRUE.equals(tc.get("isHidden"));
 
-            List<String> runCmd = List.of("java", "-Xmx" + memoryLimitMb + "m", "-Xms16m", "Main");
+            List<String> runCmd = List.of(java, "-Xmx" + memoryLimitMb + "m", "-Xms16m", "Main");
             ProcessResult runRes = runCommand(runCmd, tempDir, input, timeLimitMs);
             maxTimeMs = Math.max(maxTimeMs, (int) runRes.executionTimeMs);
 
@@ -303,6 +314,50 @@ public class EmbeddedCodeExecutionService {
             } catch (Exception ignored) {}
         }
         return null;
+    }
+
+    private synchronized String getJavacCommand() {
+        if (detectedJavacCmd != null) return detectedJavacCmd;
+        List<String> candidates = new ArrayList<>();
+        candidates.add("javac");
+        candidates.add("/usr/lib/jvm/java-17-openjdk/bin/javac");
+        candidates.add("/usr/lib/jvm/default-jvm/bin/javac");
+        String javaHome = System.getenv("JAVA_HOME");
+        if (javaHome != null) {
+            candidates.add(javaHome + "/bin/javac");
+        }
+        for (String cmd : candidates) {
+            try {
+                Process p = new ProcessBuilder(cmd, "-version").start();
+                if (p.waitFor(2, TimeUnit.SECONDS) && p.exitValue() == 0) {
+                    detectedJavacCmd = cmd;
+                    return cmd;
+                }
+            } catch (Exception ignored) {}
+        }
+        return null;
+    }
+
+    private synchronized String getJavaCommand() {
+        if (detectedJavaCmd != null) return detectedJavaCmd;
+        List<String> candidates = new ArrayList<>();
+        candidates.add("java");
+        candidates.add("/usr/lib/jvm/java-17-openjdk/bin/java");
+        candidates.add("/usr/lib/jvm/default-jvm/bin/java");
+        String javaHome = System.getenv("JAVA_HOME");
+        if (javaHome != null) {
+            candidates.add(javaHome + "/bin/java");
+        }
+        for (String cmd : candidates) {
+            try {
+                Process p = new ProcessBuilder(cmd, "-version").start();
+                if (p.waitFor(2, TimeUnit.SECONDS) && p.exitValue() == 0) {
+                    detectedJavaCmd = cmd;
+                    return cmd;
+                }
+            } catch (Exception ignored) {}
+        }
+        return "java";
     }
 
     private ProcessResult runCommand(List<String> command, Path workingDir, String input, long timeoutMs) {
