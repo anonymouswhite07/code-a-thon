@@ -103,7 +103,7 @@ public class DataSeeder implements CommandLineRunner {
 
         Round r2 = roundRepository.findByRoundNumber(2).orElseGet(() -> {
             Round r = new Round(2, "Round 02 — Java", "The Logic", "JAVA",
-                    "Apply structured OOP logic, arrays, and standard algorithms to conquer the competition podium.", 45);
+                    "Master basic Java syntax, conditions, loops, and arithmetic logic.", 45);
             r.setStatus("SCHEDULED");
             r.setIsLocked(true);
             return roundRepository.save(r);
@@ -111,12 +111,12 @@ public class DataSeeder implements CommandLineRunner {
         r2.setTitle("Round 02 — Java");
         r2.setSubtitle("The Logic");
         r2.setLanguage("JAVA");
-        r2.setDescription("Apply structured OOP logic, arrays, and standard algorithms to conquer the competition podium.");
+        r2.setDescription("Master basic Java syntax, conditions, loops, and arithmetic logic.");
         r2 = roundRepository.save(r2);
 
         Round r3 = roundRepository.findByRoundNumber(3).orElseGet(() -> {
             Round r = new Round(3, "Round 03 — Python", "The Master", "PYTHON",
-                    "Think smarter, solve faster. Tackle string processing, lists, frequency counting, and algorithms.", 60);
+                    "Master Python conditionals, while loops, mathematical algorithms, and reversal.", 60);
             r.setStatus("SCHEDULED");
             r.setIsLocked(true);
             return roundRepository.save(r);
@@ -124,7 +124,7 @@ public class DataSeeder implements CommandLineRunner {
         r3.setTitle("Round 03 — Python");
         r3.setSubtitle("The Master");
         r3.setLanguage("PYTHON");
-        r3.setDescription("Think smarter, solve faster. Tackle string processing, lists, frequency counting, and algorithms.");
+        r3.setDescription("Master Python conditionals, while loops, mathematical algorithms, and reversal.");
         r3 = roundRepository.save(r3);
 
         // 5. Seed Questions if empty
@@ -171,10 +171,10 @@ public class DataSeeder implements CommandLineRunner {
 
     private void syncRound2AndRound3Questions(Round r2, Round r3) {
         List<Question> r2Questions = questionRepository.findByRoundOrderByOrderIndexAsc(r2);
-        boolean r2NeedsSync = r2Questions.isEmpty() || !r2Questions.get(0).getSlug().equals("second-largest-distinct-element");
+        boolean r2NeedsSync = r2Questions.isEmpty() || !r2Questions.get(0).getSlug().equals("even-or-odd");
 
         List<Question> r3Questions = questionRepository.findByRoundOrderByOrderIndexAsc(r3);
-        boolean r3NeedsSync = r3Questions.isEmpty() || !r3Questions.get(0).getSlug().equals("subarray-sum-equals-k");
+        boolean r3NeedsSync = r3Questions.isEmpty() || !r3Questions.get(0).getSlug().equals("positive-negative-or-zero");
 
         if (r2NeedsSync) {
             for (Question q : r2Questions) {
@@ -326,15 +326,15 @@ public class DataSeeder implements CommandLineRunner {
     private void seedRound2JavaQuestions(Round r2) {
         Question q2_1 = new Question();
         q2_1.setRound(r2);
-        q2_1.setTitle("Find the Second Largest Distinct Element");
-        q2_1.setSlug("second-largest-distinct-element");
-        q2_1.setDescription("Given an integer array nums, return the second-largest distinct element in the array.\n\nIf no second-largest distinct element exists (e.g. all elements are identical, or the array has fewer than 2 distinct values), return -1.\n\nYou must solve the problem without sorting the array.");
-        q2_1.setInputFormat("A single line containing space-separated integers representing nums.");
-        q2_1.setOutputFormat("Print the second-largest distinct integer, or -1.");
-        q2_1.setConstraints("1 <= nums.length <= 100000\n-10^9 <= nums[i] <= 10^9\nDo not use sorting algorithms or Arrays.sort().");
-        q2_1.setExamples("Input: 12 35 1 10 34 1\nOutput: 34\nExplanation: The largest element is 35, and the second-largest distinct element is 34.\n\nInput: 10 10 10\nOutput: -1\nExplanation: All elements are identical, so no second-largest distinct element exists.");
-        q2_1.setStarterCode("import java.util.*;\n\npublic class Main {\n    public static int secondLargest(int[] nums) {\n        // Write your code here (without sorting)\n        return -1;\n    }\n\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        List<Integer> list = new ArrayList<>();\n        while (sc.hasNextInt()) {\n            list.add(sc.nextInt());\n        }\n        if (list.isEmpty()) {\n            System.out.println(-1);\n            return;\n        }\n        int[] nums = new int[list.size()];\n        for (int i = 0; i < list.size(); i++) nums[i] = list.get(i);\n        System.out.println(secondLargest(nums));\n    }\n}\n");
-        q2_1.setDifficulty("MEDIUM");
+        q2_1.setTitle("Even or Odd");
+        q2_1.setSlug("even-or-odd");
+        q2_1.setDescription("Write a Java program to check whether a given integer is even or odd.\n\nPrint `Even` if the number is even and `Odd` if the number is odd.");
+        q2_1.setInputFormat("A single integer n on standard input.");
+        q2_1.setOutputFormat("Print `Even` or `Odd` on a single line.");
+        q2_1.setConstraints("-10^6 <= n <= 10^6");
+        q2_1.setExamples("Input: 7\nOutput: Odd\n\nInput: 4\nOutput: Even");
+        q2_1.setStarterCode("import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (!sc.hasNextInt()) return;\n        int n = sc.nextInt();\n        // Write your code here\n    }\n}\n");
+        q2_1.setDifficulty("EASY");
         q2_1.setPoints(100);
         q2_1.setTimeLimitMs(2000);
         q2_1.setMemoryLimitMb(128);
@@ -342,24 +342,23 @@ public class DataSeeder implements CommandLineRunner {
         q2_1.setOrderIndex(1);
         q2_1 = questionRepository.save(q2_1);
 
-        testCaseRepository.save(new TestCase(q2_1, "12 35 1 10 34 1\n", "34", false, 1));
-        testCaseRepository.save(new TestCase(q2_1, "10 10 10\n", "-1", false, 2));
-        testCaseRepository.save(new TestCase(q2_1, "-5 -2 -8\n", "-5", false, 3));
-        testCaseRepository.save(new TestCase(q2_1, "5\n", "-1", true, 4));
-        testCaseRepository.save(new TestCase(q2_1, "100 200 300 300 200\n", "200", true, 5));
-        testCaseRepository.save(new TestCase(q2_1, "-100 -200 -300 -50\n", "-100", true, 6));
+        testCaseRepository.save(new TestCase(q2_1, "7\n", "Odd", false, 1));
+        testCaseRepository.save(new TestCase(q2_1, "4\n", "Even", false, 2));
+        testCaseRepository.save(new TestCase(q2_1, "0\n", "Even", true, 3));
+        testCaseRepository.save(new TestCase(q2_1, "-5\n", "Odd", true, 4));
+        testCaseRepository.save(new TestCase(q2_1, "-8\n", "Even", true, 5));
 
         Question q2_2 = new Question();
         q2_2.setRound(r2);
-        q2_2.setTitle("Longest Substring Without Repeating Characters");
-        q2_2.setSlug("longest-substring-without-repeating");
-        q2_2.setDescription("Given a string s, return the length of the longest contiguous substring that contains no repeated characters.\n\nA substring must contain consecutive characters from the original string. Your solution should run in O(n) time complexity.");
-        q2_2.setInputFormat("A single line containing string s on standard input.");
-        q2_2.setOutputFormat("Print the length of the longest substring without repeating characters.");
-        q2_2.setConstraints("0 <= s.length <= 50000\ns contains English letters, digits, symbols, and spaces.\nRequired time complexity: O(n).");
-        q2_2.setExamples("Input: abcabcbb\nOutput: 3\nExplanation: The longest substring without repeating characters is 'abc', with length 3.\n\nInput: bbbbb\nOutput: 1\n\nInput: pwwkew\nOutput: 3");
-        q2_2.setStarterCode("import java.util.*;\n\npublic class Main {\n    public static int lengthOfLongestSubstring(String s) {\n        // Write your code here (O(n) time complexity)\n        return 0;\n    }\n\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        String s = sc.hasNextLine() ? sc.nextLine() : \"\";\n        System.out.println(lengthOfLongestSubstring(s));\n    }\n}\n");
-        q2_2.setDifficulty("MEDIUM");
+        q2_2.setTitle("Find the Largest of Two Numbers");
+        q2_2.setSlug("largest-of-two-numbers");
+        q2_2.setDescription("Write a Java program to find the largest of two numbers using if-else.\n\nPrint the output in the format `Largest: <number>`.");
+        q2_2.setInputFormat("Two space-separated integers a and b on standard input.");
+        q2_2.setOutputFormat("Print `Largest: <number>`.");
+        q2_2.setConstraints("-10^6 <= a, b <= 10^6");
+        q2_2.setExamples("Input: 15 25\nOutput: Largest: 25\n\nInput: 50 10\nOutput: Largest: 50");
+        q2_2.setStarterCode("import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (!sc.hasNextInt()) return;\n        int a = sc.nextInt();\n        int b = sc.nextInt();\n        // Write your code here\n    }\n}\n");
+        q2_2.setDifficulty("EASY");
         q2_2.setPoints(100);
         q2_2.setTimeLimitMs(2000);
         q2_2.setMemoryLimitMb(128);
@@ -367,24 +366,23 @@ public class DataSeeder implements CommandLineRunner {
         q2_2.setOrderIndex(2);
         q2_2 = questionRepository.save(q2_2);
 
-        testCaseRepository.save(new TestCase(q2_2, "abcabcbb\n", "3", false, 1));
-        testCaseRepository.save(new TestCase(q2_2, "bbbbb\n", "1", false, 2));
-        testCaseRepository.save(new TestCase(q2_2, "pwwkew\n", "3", false, 3));
-        testCaseRepository.save(new TestCase(q2_2, "abcdef\n", "6", true, 4));
-        testCaseRepository.save(new TestCase(q2_2, "au\n", "2", true, 5));
-        testCaseRepository.save(new TestCase(q2_2, "aab\n", "2", true, 6));
+        testCaseRepository.save(new TestCase(q2_2, "15 25\n", "Largest: 25", false, 1));
+        testCaseRepository.save(new TestCase(q2_2, "50 10\n", "Largest: 50", false, 2));
+        testCaseRepository.save(new TestCase(q2_2, "42 42\n", "Largest: 42", true, 3));
+        testCaseRepository.save(new TestCase(q2_2, "-10 -5\n", "Largest: -5", true, 4));
+        testCaseRepository.save(new TestCase(q2_2, "0 100\n", "Largest: 100", true, 5));
 
         Question q2_3 = new Question();
         q2_3.setRound(r2);
-        q2_3.setTitle("Group Anagrams");
-        q2_3.setSlug("group-anagrams");
-        q2_3.setDescription("Given an array of strings strs, group the strings that are anagrams of one another.\nTwo strings are anagrams if they contain the same characters with the same frequencies.\n\nPrint the total number of distinct anagram groups on the first line, and the sorted sizes of each group separated by space on the second line.");
-        q2_3.setInputFormat("A single line containing space-separated lowercase strings.");
-        q2_3.setOutputFormat("First line: Total count of anagram groups.\nSecond line: Space-separated sizes of each group sorted in ascending order.");
-        q2_3.setConstraints("1 <= strs.length <= 10000\n0 <= strs[i].length <= 100\nStrings contain lowercase English letters.");
-        q2_3.setExamples("Input: eat tea tan ate nat bat\nOutput:\n3\n1 2 3\nExplanation: The groups are ['bat'] (size 1), ['tan', 'nat'] (size 2), and ['eat', 'tea', 'ate'] (size 3).\n\nInput: a\nOutput:\n1\n1");
-        q2_3.setStarterCode("import java.util.*;\n\npublic class Main {\n    public static List<List<String>> groupAnagrams(String[] strs) {\n        // Write your code here\n        return new ArrayList<>();\n    }\n\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (!sc.hasNext()) {\n            System.out.println(\"0\\n0\");\n            return;\n        }\n        String line = sc.nextLine().trim();\n        String[] strs = line.split(\"\\\\s+\");\n        Map<String, List<String>> groups = new HashMap<>();\n        for (String word : strs) {\n            char[] chars = word.toCharArray();\n            Arrays.sort(chars);\n            String key = new String(chars);\n            groups.computeIfAbsent(key, k -> new ArrayList<>()).add(word);\n        }\n        System.out.println(groups.size());\n        List<Integer> sizes = new ArrayList<>();\n        for (List<String> g : groups.values()) sizes.add(g.size());\n        Collections.sort(sizes);\n        for (int i = 0; i < sizes.size(); i++) {\n            if (i > 0) System.out.print(\" \");\n            System.out.print(sizes.get(i));\n        }\n        System.out.println();\n    }\n}\n");
-        q2_3.setDifficulty("MEDIUM");
+        q2_3.setTitle("Sum of Numbers from 1 to N");
+        q2_3.setSlug("sum-of-numbers-1-to-n");
+        q2_3.setDescription("Write a Java program to calculate the sum of all numbers from 1 to N using a loop.\n\nPrint the output in the format `Sum: <result>`.");
+        q2_3.setInputFormat("A single positive integer N on standard input.");
+        q2_3.setOutputFormat("Print `Sum: <result>`.");
+        q2_3.setConstraints("1 <= N <= 10000");
+        q2_3.setExamples("Input: 5\nOutput: Sum: 15\nExplanation: 1 + 2 + 3 + 4 + 5 = 15");
+        q2_3.setStarterCode("import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (!sc.hasNextInt()) return;\n        int n = sc.nextInt();\n        // Write your code here\n    }\n}\n");
+        q2_3.setDifficulty("EASY");
         q2_3.setPoints(100);
         q2_3.setTimeLimitMs(2000);
         q2_3.setMemoryLimitMb(128);
@@ -392,23 +390,23 @@ public class DataSeeder implements CommandLineRunner {
         q2_3.setOrderIndex(3);
         q2_3 = questionRepository.save(q2_3);
 
-        testCaseRepository.save(new TestCase(q2_3, "eat tea tan ate nat bat\n", "3\n1 2 3", false, 1));
-        testCaseRepository.save(new TestCase(q2_3, "a\n", "1\n1", false, 2));
-        testCaseRepository.save(new TestCase(q2_3, "listen silent enlist apple\n", "2\n1 3", true, 3));
-        testCaseRepository.save(new TestCase(q2_3, "rat tar car art\n", "2\n1 3", true, 4));
-        testCaseRepository.save(new TestCase(q2_3, "abc bca cab cba bac acb def fed\n", "2\n2 6", true, 5));
+        testCaseRepository.save(new TestCase(q2_3, "5\n", "Sum: 15", false, 1));
+        testCaseRepository.save(new TestCase(q2_3, "1\n", "Sum: 1", false, 2));
+        testCaseRepository.save(new TestCase(q2_3, "10\n", "Sum: 55", true, 3));
+        testCaseRepository.save(new TestCase(q2_3, "100\n", "Sum: 5050", true, 4));
+        testCaseRepository.save(new TestCase(q2_3, "4\n", "Sum: 10", true, 5));
 
         Question q2_4 = new Question();
         q2_4.setRound(r2);
-        q2_4.setTitle("Rotate a Matrix by 90 Degrees");
-        q2_4.setSlug("rotate-matrix-90");
-        q2_4.setDescription("Given an n x n integer matrix, rotate it 90 degrees clockwise in place.\n\nYou must modify the original matrix directly without creating a second matrix.");
-        q2_4.setInputFormat("First line contains an integer n.\nThe next n lines each contain n space-separated integers representing matrix rows.");
-        q2_4.setOutputFormat("Print the rotated n x n matrix with space-separated integers on each line.");
-        q2_4.setConstraints("1 <= n <= 20\n-1000 <= matrix[i][j] <= 1000");
-        q2_4.setExamples("Input:\n3\n1 2 3\n4 5 6\n7 8 9\nOutput:\n7 4 1\n8 5 2\n9 6 3\n\nInput:\n2\n1 2\n3 4\nOutput:\n3 1\n4 2");
-        q2_4.setStarterCode("import java.util.*;\n\npublic class Main {\n    public static void rotate(int[][] matrix) {\n        // Write your code here (in-place clockwise rotation)\n    }\n\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (!sc.hasNextInt()) return;\n        int n = sc.nextInt();\n        int[][] matrix = new int[n][n];\n        for (int i = 0; i < n; i++) {\n            for (int j = 0; j < n; j++) {\n                matrix[i][j] = sc.nextInt();\n            }\n        }\n        rotate(matrix);\n        for (int i = 0; i < n; i++) {\n            StringBuilder sb = new StringBuilder();\n            for (int j = 0; j < n; j++) {\n                if (j > 0) sb.append(\" \");\n                sb.append(matrix[i][j]);\n            }\n            System.out.println(sb.toString());\n        }\n    }\n}\n");
-        q2_4.setDifficulty("MEDIUM");
+        q2_4.setTitle("Multiplication Table");
+        q2_4.setSlug("multiplication-table");
+        q2_4.setDescription("Write a Java program to print the multiplication table of a given number from 1 to 10.\n\nEach line must follow the exact format: `n x i = <result>` where i ranges from 1 to 10.");
+        q2_4.setInputFormat("A single integer n on standard input.");
+        q2_4.setOutputFormat("Print 10 lines of the multiplication table.");
+        q2_4.setConstraints("1 <= n <= 1000");
+        q2_4.setExamples("Input: 3\nOutput:\n3 x 1 = 3\n3 x 2 = 6\n3 x 3 = 9\n3 x 4 = 12\n3 x 5 = 15\n3 x 6 = 18\n3 x 7 = 21\n3 x 8 = 24\n3 x 9 = 27\n3 x 10 = 30");
+        q2_4.setStarterCode("import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (!sc.hasNextInt()) return;\n        int n = sc.nextInt();\n        // Write your code here\n    }\n}\n");
+        q2_4.setDifficulty("EASY");
         q2_4.setPoints(100);
         q2_4.setTimeLimitMs(2000);
         q2_4.setMemoryLimitMb(128);
@@ -416,22 +414,21 @@ public class DataSeeder implements CommandLineRunner {
         q2_4.setOrderIndex(4);
         q2_4 = questionRepository.save(q2_4);
 
-        testCaseRepository.save(new TestCase(q2_4, "3\n1 2 3\n4 5 6\n7 8 9\n", "7 4 1\n8 5 2\n9 6 3", false, 1));
-        testCaseRepository.save(new TestCase(q2_4, "2\n1 2\n3 4\n", "3 1\n4 2", false, 2));
-        testCaseRepository.save(new TestCase(q2_4, "1\n42\n", "42", false, 3));
-        testCaseRepository.save(new TestCase(q2_4, "4\n1 2 3 4\n5 6 7 8\n9 10 11 12\n13 14 15 16\n", "13 9 5 1\n14 10 6 2\n15 11 7 3\n16 12 8 4", true, 4));
+        testCaseRepository.save(new TestCase(q2_4, "3\n", "3 x 1 = 3\n3 x 2 = 6\n3 x 3 = 9\n3 x 4 = 12\n3 x 5 = 15\n3 x 6 = 18\n3 x 7 = 21\n3 x 8 = 24\n3 x 9 = 27\n3 x 10 = 30", false, 1));
+        testCaseRepository.save(new TestCase(q2_4, "5\n", "5 x 1 = 5\n5 x 2 = 10\n5 x 3 = 15\n5 x 4 = 20\n5 x 5 = 25\n5 x 6 = 30\n5 x 7 = 35\n5 x 8 = 40\n5 x 9 = 45\n5 x 10 = 50", false, 2));
+        testCaseRepository.save(new TestCase(q2_4, "1\n", "1 x 1 = 1\n1 x 2 = 2\n1 x 3 = 3\n1 x 4 = 4\n1 x 5 = 5\n1 x 6 = 6\n1 x 7 = 7\n1 x 8 = 8\n1 x 9 = 9\n1 x 10 = 10", true, 3));
 
         Question q2_5 = new Question();
         q2_5.setRound(r2);
-        q2_5.setTitle("Find the Kth Largest Element");
-        q2_5.setSlug("kth-largest-element");
-        q2_5.setDescription("Given an integer array nums and an integer k, return the kth-largest element in the array.\n\nNote that it is the kth-largest element in the sorted order, not the kth distinct element. Duplicate values count separately.\nSolve the problem efficiently (e.g. using a min-heap or quickselect) without fully sorting the entire array if possible.");
-        q2_5.setInputFormat("First line contains the integer k.\nSecond line contains space-separated integers representing nums.");
-        q2_5.setOutputFormat("Print the kth-largest element.");
-        q2_5.setConstraints("1 <= k <= nums.length <= 100000\n-10000 <= nums[i] <= 10000");
-        q2_5.setExamples("Input:\n2\n3 2 1 5 6 4\nOutput: 5\nExplanation: The sorted array is [1, 2, 3, 4, 5, 6]. The 2nd largest element is 5.\n\nInput:\n4\n3 2 3 1 2 4 5 5 6\nOutput: 4");
-        q2_5.setStarterCode("import java.util.*;\n\npublic class Main {\n    public static int findKthLargest(int[] nums, int k) {\n        // Write your code here\n        return 0;\n    }\n\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (!sc.hasNextInt()) return;\n        int k = sc.nextInt();\n        List<Integer> list = new ArrayList<>();\n        while (sc.hasNextInt()) {\n            list.add(sc.nextInt());\n        }\n        int[] nums = new int[list.size()];\n        for (int i = 0; i < list.size(); i++) nums[i] = list.get(i);\n        System.out.println(findKthLargest(nums, k));\n    }\n}\n");
-        q2_5.setDifficulty("MEDIUM");
+        q2_5.setTitle("Count Digits");
+        q2_5.setSlug("count-digits");
+        q2_5.setDescription("Write a Java program to count the number of digits in a positive integer using a while loop.\n\nPrint the output in the format `Digits: <count>`.");
+        q2_5.setInputFormat("A single positive integer n on standard input.");
+        q2_5.setOutputFormat("Print `Digits: <count>`.");
+        q2_5.setConstraints("1 <= n <= 2 * 10^9");
+        q2_5.setExamples("Input: 12345\nOutput: Digits: 5\n\nInput: 7\nOutput: Digits: 1");
+        q2_5.setStarterCode("import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (!sc.hasNextLong()) return;\n        long n = sc.nextLong();\n        // Write your code here\n    }\n}\n");
+        q2_5.setDifficulty("EASY");
         q2_5.setPoints(100);
         q2_5.setTimeLimitMs(2000);
         q2_5.setMemoryLimitMb(128);
@@ -439,26 +436,26 @@ public class DataSeeder implements CommandLineRunner {
         q2_5.setOrderIndex(5);
         q2_5 = questionRepository.save(q2_5);
 
-        testCaseRepository.save(new TestCase(q2_5, "2\n3 2 1 5 6 4\n", "5", false, 1));
-        testCaseRepository.save(new TestCase(q2_5, "4\n3 2 3 1 2 4 5 5 6\n", "4", false, 2));
-        testCaseRepository.save(new TestCase(q2_5, "1\n10 20 30\n", "30", false, 3));
-        testCaseRepository.save(new TestCase(q2_5, "3\n7 10 4 3 20 15\n", "10", true, 4));
-        testCaseRepository.save(new TestCase(q2_5, "1\n-5\n", "-5", true, 5));
+        testCaseRepository.save(new TestCase(q2_5, "12345\n", "Digits: 5", false, 1));
+        testCaseRepository.save(new TestCase(q2_5, "7\n", "Digits: 1", false, 2));
+        testCaseRepository.save(new TestCase(q2_5, "1000\n", "Digits: 4", true, 3));
+        testCaseRepository.save(new TestCase(q2_5, "987654321\n", "Digits: 9", true, 4));
+        testCaseRepository.save(new TestCase(q2_5, "42\n", "Digits: 2", true, 5));
 
     }
 
     private void seedRound3PythonQuestions(Round r3) {
         Question q3_1 = new Question();
         q3_1.setRound(r3);
-        q3_1.setTitle("Subarray Sum Equals K");
-        q3_1.setSlug("subarray-sum-equals-k");
-        q3_1.setDescription("Given an integer array nums and an integer k, return the total number of continuous subarrays whose sum equals k.\n\nA subarray must contain consecutive elements. The array may contain negative numbers, zeros, and positive numbers.\nYour solution should run in O(n) time complexity using prefix sums and a hash map.");
-        q3_1.setInputFormat("First line contains integer k.\nSecond line contains space-separated integers representing nums.");
-        q3_1.setOutputFormat("Print the total number of continuous subarrays whose sum equals k.");
-        q3_1.setConstraints("1 <= nums.length <= 20000\n-1000 <= nums[i] <= 1000\n-10^7 <= k <= 10^7");
-        q3_1.setExamples("Input:\n2\n1 1 1\nOutput: 2\nExplanation: Subarrays with sum 2 are nums[0..1] and nums[1..2].\n\nInput:\n3\n1 2 3\nOutput: 2\n\nInput:\n0\n1 -1 0\nOutput: 3");
-        q3_1.setStarterCode("import sys\n\ndef subarraySum(nums: list[int], k: int) -> int:\n    # Write your code here (O(n) prefix sum + hash map)\n    return 0\n\nif __name__ == '__main__':\n    lines = [line.strip() for line in sys.stdin.read().splitlines() if line.strip()]\n    if len(lines) >= 2:\n        k = int(lines[0])\n        nums = list(map(int, lines[1].replace(',', ' ').replace('[', ' ').replace(']', ' ').split()))\n        print(subarraySum(nums, k))\n");
-        q3_1.setDifficulty("MEDIUM");
+        q3_1.setTitle("Positive, Negative, or Zero");
+        q3_1.setSlug("positive-negative-or-zero");
+        q3_1.setDescription("Write a Python program to check whether a number is positive, negative, or zero.\n\nPrint `Positive`, `Negative`, or `Zero` on a single line.");
+        q3_1.setInputFormat("A single integer n on standard input.");
+        q3_1.setOutputFormat("Print `Positive`, `Negative`, or `Zero`.");
+        q3_1.setConstraints("-10^9 <= n <= 10^9");
+        q3_1.setExamples("Input: -5\nOutput: Negative\n\nInput: 10\nOutput: Positive\n\nInput: 0\nOutput: Zero");
+        q3_1.setStarterCode("import sys\n\nif __name__ == '__main__':\n    raw = sys.stdin.read().strip()\n    if raw:\n        n = int(raw)\n        # Write your code here\n");
+        q3_1.setDifficulty("EASY");
         q3_1.setPoints(100);
         q3_1.setTimeLimitMs(2000);
         q3_1.setMemoryLimitMb(128);
@@ -466,23 +463,23 @@ public class DataSeeder implements CommandLineRunner {
         q3_1.setOrderIndex(1);
         q3_1 = questionRepository.save(q3_1);
 
-        testCaseRepository.save(new TestCase(q3_1, "2\n1 1 1\n", "2", false, 1));
-        testCaseRepository.save(new TestCase(q3_1, "3\n1 2 3\n", "2", false, 2));
-        testCaseRepository.save(new TestCase(q3_1, "0\n1 -1 0\n", "3", false, 3));
-        testCaseRepository.save(new TestCase(q3_1, "5\n2 3 5 -5 5\n", "3", true, 4));
-        testCaseRepository.save(new TestCase(q3_1, "7\n1 2 3 4 5\n", "1", true, 5));
+        testCaseRepository.save(new TestCase(q3_1, "-5\n", "Negative", false, 1));
+        testCaseRepository.save(new TestCase(q3_1, "10\n", "Positive", false, 2));
+        testCaseRepository.save(new TestCase(q3_1, "0\n", "Zero", true, 3));
+        testCaseRepository.save(new TestCase(q3_1, "-1000\n", "Negative", true, 4));
+        testCaseRepository.save(new TestCase(q3_1, "42\n", "Positive", true, 5));
 
         Question q3_2 = new Question();
         q3_2.setRound(r3);
-        q3_2.setTitle("Product of Array Except Self");
-        q3_2.setSlug("product-of-array-except-self");
-        q3_2.setDescription("Given an integer array nums, return an array answer such that answer[i] is equal to the product of all elements of nums except nums[i].\n\nYou must solve the problem without using division and in O(n) time complexity.");
-        q3_2.setInputFormat("A single line containing space-separated integers representing nums.");
-        q3_2.setOutputFormat("Print the resulting array in standard Python list format: [answer[0], answer[1], ...].");
-        q3_2.setConstraints("2 <= nums.length <= 100000\n-30 <= nums[i] <= 30\nDo not use division.\nThe product of any prefix or suffix fits in a 32-bit integer.");
-        q3_2.setExamples("Input: 1 2 3 4\nOutput: [24, 12, 8, 6]\n\nInput: -1 1 0 -3 3\nOutput: [0, 0, 9, 0, 0]");
-        q3_2.setStarterCode("import sys\n\ndef productExceptSelf(nums: list[int]) -> list[int]:\n    # Write your code here (without using division, O(n) time)\n    return []\n\nif __name__ == '__main__':\n    raw = sys.stdin.read().strip()\n    if raw:\n        nums = list(map(int, raw.replace(',', ' ').replace('[', ' ').replace(']', ' ').split()))\n        print(productExceptSelf(nums))\n");
-        q3_2.setDifficulty("MEDIUM");
+        q3_2.setTitle("Largest of Three Numbers");
+        q3_2.setSlug("largest-of-three-numbers-py");
+        q3_2.setDescription("Write a Python program to find the largest of three numbers using if-elif-else.\n\nPrint the output in the format `Largest: <number>`.");
+        q3_2.setInputFormat("Three numbers on standard input (comma or space separated).");
+        q3_2.setOutputFormat("Print `Largest: <number>`.");
+        q3_2.setConstraints("-10^6 <= a, b, c <= 10^6");
+        q3_2.setExamples("Input: 10, 25, 18\nOutput: Largest: 25\n\nInput: 50 10 30\nOutput: Largest: 50");
+        q3_2.setStarterCode("import sys\n\nif __name__ == '__main__':\n    raw = sys.stdin.read().strip()\n    if raw:\n        parts = raw.replace(',', ' ').split()\n        a, b, c = int(parts[0]), int(parts[1]), int(parts[2])\n        # Write your code here\n");
+        q3_2.setDifficulty("EASY");
         q3_2.setPoints(100);
         q3_2.setTimeLimitMs(2000);
         q3_2.setMemoryLimitMb(128);
@@ -490,23 +487,23 @@ public class DataSeeder implements CommandLineRunner {
         q3_2.setOrderIndex(2);
         q3_2 = questionRepository.save(q3_2);
 
-        testCaseRepository.save(new TestCase(q3_2, "1 2 3 4\n", "[24, 12, 8, 6]", false, 1));
-        testCaseRepository.save(new TestCase(q3_2, "-1 1 0 -3 3\n", "[0, 0, 9, 0, 0]", false, 2));
-        testCaseRepository.save(new TestCase(q3_2, "2 3\n", "[3, 2]", false, 3));
-        testCaseRepository.save(new TestCase(q3_2, "1 1 1 1\n", "[1, 1, 1, 1]", true, 4));
-        testCaseRepository.save(new TestCase(q3_2, "5 0 2\n", "[0, 10, 0]", true, 5));
+        testCaseRepository.save(new TestCase(q3_2, "10, 25, 18\n", "Largest: 25", false, 1));
+        testCaseRepository.save(new TestCase(q3_2, "50 10 30\n", "Largest: 50", false, 2));
+        testCaseRepository.save(new TestCase(q3_2, "7 9 20\n", "Largest: 20", true, 3));
+        testCaseRepository.save(new TestCase(q3_2, "42 42 42\n", "Largest: 42", true, 4));
+        testCaseRepository.save(new TestCase(q3_2, "-5, -2, -10\n", "Largest: -2", true, 5));
 
         Question q3_3 = new Question();
         q3_3.setRound(r3);
-        q3_3.setTitle("Minimum Size Subarray Sum");
-        q3_3.setSlug("min-size-subarray-sum");
-        q3_3.setDescription("Given an array of positive integers nums and a positive integer target, return the minimum length of a contiguous subarray whose sum is greater than or equal to target.\n\nIf no such subarray exists, return 0. Your solution should run in O(n) time complexity using a sliding window approach.");
-        q3_3.setInputFormat("First line contains the integer target.\nSecond line contains space-separated integers representing nums.");
-        q3_3.setOutputFormat("Print the minimum length of the contiguous subarray, or 0.");
-        q3_3.setConstraints("1 <= target <= 10^9\n1 <= nums.length <= 100000\n1 <= nums[i] <= 10000");
-        q3_3.setExamples("Input:\n7\n2 3 1 2 4 3\nOutput: 2\nExplanation: The subarray [4, 3] has minimal length 2 with sum 7 >= 7.\n\nInput:\n4\n1 4 4\nOutput: 1\n\nInput:\n11\n1 1 1 1 1 1 1 1\nOutput: 0");
-        q3_3.setStarterCode("import sys\n\ndef minSubArrayLen(target: int, nums: list[int]) -> int:\n    # Write your code here (O(n) sliding window)\n    return 0\n\nif __name__ == '__main__':\n    lines = [line.strip() for line in sys.stdin.read().splitlines() if line.strip()]\n    if len(lines) >= 2:\n        target = int(lines[0])\n        nums = list(map(int, lines[1].replace(',', ' ').replace('[', ' ').replace(']', ' ').split()))\n        print(minSubArrayLen(target, nums))\n");
-        q3_3.setDifficulty("MEDIUM");
+        q3_3.setTitle("Sum of Even Numbers");
+        q3_3.setSlug("sum-of-even-numbers");
+        q3_3.setDescription("Write a Python program to calculate the sum of all even numbers from 1 to N using a loop.\n\nPrint the output in the format `Sum: <result>`.");
+        q3_3.setInputFormat("A single positive integer N on standard input.");
+        q3_3.setOutputFormat("Print `Sum: <result>`.");
+        q3_3.setConstraints("1 <= N <= 10000");
+        q3_3.setExamples("Input: 10\nOutput: Sum: 30\nExplanation: 2 + 4 + 6 + 8 + 10 = 30");
+        q3_3.setStarterCode("import sys\n\nif __name__ == '__main__':\n    raw = sys.stdin.read().strip()\n    if raw:\n        n = int(raw)\n        # Write your code here\n");
+        q3_3.setDifficulty("EASY");
         q3_3.setPoints(100);
         q3_3.setTimeLimitMs(2000);
         q3_3.setMemoryLimitMb(128);
@@ -514,23 +511,23 @@ public class DataSeeder implements CommandLineRunner {
         q3_3.setOrderIndex(3);
         q3_3 = questionRepository.save(q3_3);
 
-        testCaseRepository.save(new TestCase(q3_3, "7\n2 3 1 2 4 3\n", "2", false, 1));
-        testCaseRepository.save(new TestCase(q3_3, "4\n1 4 4\n", "1", false, 2));
-        testCaseRepository.save(new TestCase(q3_3, "11\n1 1 1 1 1 1 1 1\n", "0", false, 3));
-        testCaseRepository.save(new TestCase(q3_3, "15\n1 2 3 4 5\n", "5", true, 4));
-        testCaseRepository.save(new TestCase(q3_3, "5\n2 3 1 2 4 3\n", "2", true, 5));
+        testCaseRepository.save(new TestCase(q3_3, "10\n", "Sum: 30", false, 1));
+        testCaseRepository.save(new TestCase(q3_3, "6\n", "Sum: 12", false, 2));
+        testCaseRepository.save(new TestCase(q3_3, "1\n", "Sum: 0", true, 3));
+        testCaseRepository.save(new TestCase(q3_3, "2\n", "Sum: 2", true, 4));
+        testCaseRepository.save(new TestCase(q3_3, "20\n", "Sum: 110", true, 5));
 
         Question q3_4 = new Question();
         q3_4.setRound(r3);
-        q3_4.setTitle("Search in a Rotated Sorted Array");
-        q3_4.setSlug("search-rotated-sorted-array");
-        q3_4.setDescription("An integer array nums was originally sorted in ascending order with distinct values. It was subsequently rotated at an unknown pivot index.\n\nGiven the rotated array nums and an integer target, return the index of target if it exists in nums, or -1 if it is not present.\nYour algorithm must run in O(log n) runtime complexity using binary search.");
-        q3_4.setInputFormat("First line contains the integer target.\nSecond line contains space-separated integers representing nums.");
-        q3_4.setOutputFormat("Print the 0-based index of target, or -1.");
-        q3_4.setConstraints("1 <= nums.length <= 50000\n-10^4 <= nums[i] <= 10^4\nAll values in nums are unique.\n-10^4 <= target <= 10^4");
-        q3_4.setExamples("Input:\n0\n4 5 6 7 0 1 2\nOutput: 4\n\nInput:\n3\n4 5 6 7 0 1 2\nOutput: -1\n\nInput:\n0\n1\nOutput: -1");
-        q3_4.setStarterCode("import sys\n\ndef search(nums: list[int], target: int) -> int:\n    # Write your code here (O(log n) binary search)\n    return -1\n\nif __name__ == '__main__':\n    lines = [line.strip() for line in sys.stdin.read().splitlines() if line.strip()]\n    if len(lines) >= 2:\n        target = int(lines[0])\n        nums = list(map(int, lines[1].replace(',', ' ').replace('[', ' ').replace(']', ' ').split()))\n        print(search(nums, target))\n");
-        q3_4.setDifficulty("MEDIUM");
+        q3_4.setTitle("Reverse a Number");
+        q3_4.setSlug("reverse-a-number");
+        q3_4.setDescription("Write a Python program to reverse a positive integer using a while loop and the modulus operator.\n\nPrint the output in the format `Reverse: <reversed_number>`.");
+        q3_4.setInputFormat("A single positive integer n on standard input.");
+        q3_4.setOutputFormat("Print `Reverse: <reversed_number>`.");
+        q3_4.setConstraints("1 <= n <= 10^9");
+        q3_4.setExamples("Input: 1234\nOutput: Reverse: 4321\n\nInput: 5\nOutput: Reverse: 5");
+        q3_4.setStarterCode("import sys\n\nif __name__ == '__main__':\n    raw = sys.stdin.read().strip()\n    if raw:\n        n = int(raw)\n        # Write your code here using while loop and % operator\n");
+        q3_4.setDifficulty("EASY");
         q3_4.setPoints(100);
         q3_4.setTimeLimitMs(2000);
         q3_4.setMemoryLimitMb(128);
@@ -538,24 +535,23 @@ public class DataSeeder implements CommandLineRunner {
         q3_4.setOrderIndex(4);
         q3_4 = questionRepository.save(q3_4);
 
-        testCaseRepository.save(new TestCase(q3_4, "0\n4 5 6 7 0 1 2\n", "4", false, 1));
-        testCaseRepository.save(new TestCase(q3_4, "3\n4 5 6 7 0 1 2\n", "-1", false, 2));
-        testCaseRepository.save(new TestCase(q3_4, "0\n1\n", "-1", false, 3));
-        testCaseRepository.save(new TestCase(q3_4, "1\n1\n", "0", true, 4));
-        testCaseRepository.save(new TestCase(q3_4, "8\n4 5 6 7 8 1 2 3\n", "4", true, 5));
-        testCaseRepository.save(new TestCase(q3_4, "2\n4 5 6 7 8 1 2 3\n", "6", true, 6));
+        testCaseRepository.save(new TestCase(q3_4, "1234\n", "Reverse: 4321", false, 1));
+        testCaseRepository.save(new TestCase(q3_4, "5\n", "Reverse: 5", false, 2));
+        testCaseRepository.save(new TestCase(q3_4, "1000\n", "Reverse: 1", true, 3));
+        testCaseRepository.save(new TestCase(q3_4, "98765\n", "Reverse: 56789", true, 4));
+        testCaseRepository.save(new TestCase(q3_4, "402\n", "Reverse: 204", true, 5));
 
         Question q3_5 = new Question();
         q3_5.setRound(r3);
-        q3_5.setTitle("Longest Consecutive Sequence");
-        q3_5.setSlug("longest-consecutive-sequence");
-        q3_5.setDescription("Given an unsorted integer array nums, return the length of the longest consecutive elements sequence.\nThe consecutive elements do not need to appear next to each other in the original array.\n\nYour algorithm must run in O(n) time complexity using a set and sequence-start detection.");
-        q3_5.setInputFormat("A single line containing space-separated integers representing nums (or empty line for empty array).");
-        q3_5.setOutputFormat("Print the length of the longest consecutive sequence.");
-        q3_5.setConstraints("0 <= nums.length <= 100000\n-10^9 <= nums[i] <= 10^9");
-        q3_5.setExamples("Input: 100 4 200 1 3 2\nOutput: 4\nExplanation: The longest consecutive elements sequence is [1, 2, 3, 4] with length 4.\n\nInput: 0 3 7 2 5 8 4 6 0 1\nOutput: 9\n\nInput: 1 0 1 2\nOutput: 3");
-        q3_5.setStarterCode("import sys\n\ndef longestConsecutive(nums: list[int]) -> int:\n    # Write your code here (O(n) time complexity)\n    return 0\n\nif __name__ == '__main__':\n    raw = sys.stdin.read().strip()\n    if not raw or raw == '[]':\n        print(0)\n    else:\n        nums = list(map(int, raw.replace(',', ' ').replace('[', ' ').replace(']', ' ').split()))\n        print(longestConsecutive(nums))\n");
-        q3_5.setDifficulty("MEDIUM");
+        q3_5.setTitle("Factorial of a Number");
+        q3_5.setSlug("factorial-of-a-number");
+        q3_5.setDescription("Write a Python program to calculate the factorial of a non-negative integer using a loop.\n\nPrint the output in the format `Factorial: <result>`.");
+        q3_5.setInputFormat("A single integer n on standard input.");
+        q3_5.setOutputFormat("Print `Factorial: <result>`.");
+        q3_5.setConstraints("0 <= n <= 20");
+        q3_5.setExamples("Input: 5\nOutput: Factorial: 120\nExplanation: 5 x 4 x 3 x 2 x 1 = 120\n\nInput: 0\nOutput: Factorial: 1");
+        q3_5.setStarterCode("import sys\n\nif __name__ == '__main__':\n    raw = sys.stdin.read().strip()\n    if raw:\n        n = int(raw)\n        # Write your code here using a loop\n");
+        q3_5.setDifficulty("EASY");
         q3_5.setPoints(100);
         q3_5.setTimeLimitMs(2000);
         q3_5.setMemoryLimitMb(128);
@@ -563,11 +559,11 @@ public class DataSeeder implements CommandLineRunner {
         q3_5.setOrderIndex(5);
         q3_5 = questionRepository.save(q3_5);
 
-        testCaseRepository.save(new TestCase(q3_5, "100 4 200 1 3 2\n", "4", false, 1));
-        testCaseRepository.save(new TestCase(q3_5, "0 3 7 2 5 8 4 6 0 1\n", "9", false, 2));
-        testCaseRepository.save(new TestCase(q3_5, "1 0 1 2\n", "3", false, 3));
-        testCaseRepository.save(new TestCase(q3_5, "\n", "0", true, 4));
-        testCaseRepository.save(new TestCase(q3_5, "9 1 4 7 3 -1 0 5 8 -1 6\n", "7", true, 5));
+        testCaseRepository.save(new TestCase(q3_5, "5\n", "Factorial: 120", false, 1));
+        testCaseRepository.save(new TestCase(q3_5, "0\n", "Factorial: 1", false, 2));
+        testCaseRepository.save(new TestCase(q3_5, "1\n", "Factorial: 1", true, 3));
+        testCaseRepository.save(new TestCase(q3_5, "4\n", "Factorial: 24", true, 4));
+        testCaseRepository.save(new TestCase(q3_5, "6\n", "Factorial: 720", true, 5));
 
     }
 
