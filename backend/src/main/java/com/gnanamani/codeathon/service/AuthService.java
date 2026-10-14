@@ -90,7 +90,7 @@ public class AuthService {
         // Persist login activity, timestamp, and audit log to Supabase
         user.setLastLoginAt(java.time.LocalDateTime.now());
         user.setUpdatedAt(java.time.LocalDateTime.now());
-        user = userRepository.save(user);
+        userRepository.save(user);
 
         auditService.log(user.getEmail(), "USER_LOGGED_IN", "User " + user.getId(),
                 "User logged in successfully with role " + user.getRole(), null);
