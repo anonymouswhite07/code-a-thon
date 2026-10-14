@@ -7,6 +7,7 @@ import com.gnanamani.codeathon.dto.SubmitCodeRequest;
 import com.gnanamani.codeathon.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,22 @@ public class SubmissionEvaluationService {
     @Value("${app.code-runner.url:http://localhost:5050}")
     private String codeRunnerUrl;
 
+    public SubmissionEvaluationService(
+            SubmissionRepository submissionRepository,
+            SubmissionResultRepository submissionResultRepository,
+            QuestionRepository questionRepository,
+            TestCaseRepository testCaseRepository,
+            ParticipantRepository participantRepository,
+            CompetitionEngineService competitionEngineService,
+            RealtimeEventService realtimeEventService,
+            ParticipantQuestionLockRepository lockRepository,
+            QuestionOrderingService questionOrderingService) {
+        this(submissionRepository, submissionResultRepository, questionRepository, testCaseRepository,
+                participantRepository, competitionEngineService, realtimeEventService, lockRepository,
+                questionOrderingService, new EmbeddedCodeExecutionService());
+    }
+
+    @Autowired
     public SubmissionEvaluationService(
             SubmissionRepository submissionRepository,
             SubmissionResultRepository submissionResultRepository,
