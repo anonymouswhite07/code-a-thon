@@ -173,7 +173,7 @@ public class SubmissionEvaluationService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(runnerRequest, headers);
 
-            ResponseEntity<String> response = restTemplate.postForEntity(codeRunnerUrl + "/execute", entity, String.class);
+            ResponseEntity<String> response = callRunnerExecute(entity);
             JsonNode root = objectMapper.readTree(response.getBody());
 
             String overallStatus = root.path("overallStatus").asText("FAILED");
@@ -262,6 +262,51 @@ public class SubmissionEvaluationService {
         ));
     }
 
+    private String sanitizeRunnerUrl(String rawUrl) {
+        if (rawUrl == null || rawUrl.trim().isEmpty()) {
+            return "http://127.0.0.1:5050";
+        }
+        String clean = rawUrl.trim();
+        // If an HTTPS scheme was mistakenly configured for loopback/localhost, rewrite to HTTP
+        if (clean.matches("(?i)^https://(localhost|127\\.0\\.0\\.1|0\\.0\\.0\\.0)(:\\d+)?.*")) {
+            clean = "http://" + clean.substring(8);
+        }
+        while (clean.endsWith("/")) {
+            clean = clean.substring(0, clean.length() - 1);
+        }
+        return clean;
+    }
+
+    private List<String> getRunnerCandidateUrls() {
+        String base = sanitizeRunnerUrl(this.codeRunnerUrl);
+        List<String> candidates = new ArrayList<>();
+        candidates.add(base);
+
+        if (base.contains("localhost")) {
+            candidates.add(base.replace("localhost", "127.0.0.1"));
+        } else if (base.contains("127.0.0.1")) {
+            candidates.add(base.replace("127.0.0.1", "localhost"));
+        }
+        return candidates;
+    }
+
+    private ResponseEntity<String> callRunnerExecute(HttpEntity<?> entity) {
+        List<String> candidates = getRunnerCandidateUrls();
+        Exception lastException = null;
+        for (String url : candidates) {
+            try {
+                return restTemplate.postForEntity(url + "/execute", entity, String.class);
+            } catch (Exception ex) {
+                log.warn("Failed to reach code runner at {}: {}", url, ex.getMessage());
+                lastException = ex;
+            }
+        }
+        if (lastException instanceof RuntimeException) {
+            throw (RuntimeException) lastException;
+        }
+        throw new IllegalStateException("Failed to connect to code runner. Candidates tried: " + candidates, lastException);
+    }
+
     public Map<String, Object> runPlaygroundCode(String language, String sourceCode, String customInput) {
         Map<String, Object> tc = new HashMap<>();
         tc.put("id", "playground-1");
@@ -280,36 +325,55 @@ public class SubmissionEvaluationService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(runnerRequest, headers);
 
-        ResponseEntity<Map> response = restTemplate.postForEntity(codeRunnerUrl + "/execute", entity, Map.class);
-        Map<String, Object> body = (Map<String, Object>) response.getBody();
-        if (body != null) {
-            Map<String, Object> enriched = new HashMap<>(body);
-            List<Map<String, Object>> results = (List<Map<String, Object>>) body.get("results");
-            String stdout = "";
-            String stderr = "";
-            int exitCode = 0;
-            if (results != null && !results.isEmpty()) {
-                Map<String, Object> first = results.get(0);
-                stdout = (String) first.getOrDefault("actualOutput", "");
-                stderr = (String) first.getOrDefault("error", "");
-                if (stderr == null) stderr = "";
-            }
-            String compileOutput = (String) body.getOrDefault("compileOutput", "");
-            if (compileOutput != null && !compileOutput.isEmpty()) {
-                stderr = stderr.isEmpty() ? compileOutput : stderr + "\n" + compileOutput;
-                exitCode = 1;
-            }
-            String overallStatus = (String) body.getOrDefault("overallStatus", "PASSED");
-            if (!"PASSED".equals(overallStatus)) {
-                exitCode = 1;
-            }
+        try {
+            ResponseEntity<String> response = callRunnerExecute(entity);
+            JsonNode root = objectMapper.readTree(response.getBody());
+            Map<String, Object> body = objectMapper.convertValue(root, Map.class);
+            if (body != null) {
+                Map<String, Object> enriched = new HashMap<>(body);
+                List<Map<String, Object>> results = (List<Map<String, Object>>) body.get("results");
+                String stdout = "";
+                String stderr = "";
+                int exitCode = 0;
+                if (results != null && !results.isEmpty()) {
+                    Map<String, Object> first = results.get(0);
+                    stdout = (String) first.getOrDefault("actualOutput", "");
+                    stderr = (String) first.getOrDefault("error", "");
+                    if (stderr == null) stderr = "";
+                }
+                String compileOutput = (String) body.getOrDefault("compileOutput", "");
+                if (compileOutput != null && !compileOutput.isEmpty()) {
+                    stderr = stderr.isEmpty() ? compileOutput : stderr + "\n" + compileOutput;
+                    exitCode = 1;
+                }
+                String overallStatus = (String) body.getOrDefault("overallStatus", "PASSED");
+                if (!"PASSED".equals(overallStatus)) {
+                    exitCode = 1;
+                }
 
-            enriched.put("stdout", stdout);
-            enriched.put("stderr", stderr);
-            enriched.put("status", overallStatus);
-            enriched.put("exitCode", exitCode);
-            return enriched;
+                enriched.put("stdout", stdout);
+                enriched.put("stderr", stderr);
+                enriched.put("status", overallStatus);
+                enriched.put("exitCode", exitCode);
+                return enriched;
+            }
+            return body;
+        } catch (Exception e) {
+            log.error("Playground execution failed through runner", e);
+            Map<String, Object> errRes = new HashMap<>();
+            errRes.put("overallStatus", "ERROR");
+            errRes.put("status", "ERROR");
+            errRes.put("exitCode", 1);
+            errRes.put("compileOutput", "Execution Engine Error: " + e.getMessage());
+            errRes.put("stdout", "");
+            errRes.put("stderr", "Execution Engine Error: " + e.getMessage() + "\nPlease ensure the code execution runner is running.");
+            errRes.put("results", List.of(Map.of(
+                    "testCaseId", "playground-1",
+                    "status", "ERROR",
+                    "error", e.getMessage() != null ? e.getMessage() : "Execution error",
+                    "actualOutput", ""
+            )));
+            return errRes;
         }
-        return body;
     }
 }

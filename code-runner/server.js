@@ -497,6 +497,6 @@ const server = http.createServer(async (req, res) => {
   res.end(JSON.stringify({ error: 'Not found' }));
 });
 
-server.listen(PORT, () => {
-  console.log(`[CodeRunner] Isolated Execution Service listening on port ${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`[CodeRunner] Isolated Execution Service listening on 0.0.0.0:${PORT}`);
 });
