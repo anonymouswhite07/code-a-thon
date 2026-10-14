@@ -66,23 +66,7 @@ public class DataSeeder implements CommandLineRunner {
             configRepository.save(new CompetitionConfig("event.date", "2026-03-28T09:00:00"));
         }
 
-        // 2. Clear mock participant submissions, locks, sessions, events, and mock students
-        eventRepository.deleteAll();
-        sessionRepository.deleteAll();
-        submissionResultRepository.deleteAll();
-        submissionRepository.deleteAll();
-        lockRepository.deleteAll();
-        participantRepository.deleteAll();
-
-        // Remove old mock/demo participant users and legacy accounts
-        List<User> mockUsers = userRepository.findAll().stream()
-                .filter(u -> u.getRole() == Role.ROLE_PARTICIPANT || u.getEmail().endsWith("@gct.ac.in"))
-                .toList();
-        if (!mockUsers.isEmpty()) {
-            userRepository.deleteAll(mockUsers);
-        }
-
-        // 3. Upsert Admin: admin@gct.org.in / Gnyan@codingclub.com
+        // 2. Upsert Admin: admin@gct.org.in / Gnyan@codingclub.com
         String adminEmail = "admin@gct.org.in";
         String adminPass = System.getenv().getOrDefault("ADMIN_PASSWORD", "Gnyan@codingclub.com");
         User admin = userRepository.findByEmail(adminEmail)
@@ -143,18 +127,11 @@ public class DataSeeder implements CommandLineRunner {
         r3.setDescription("Think smarter, solve faster. Tackle string processing, lists, frequency counting, and algorithms.");
         r3 = roundRepository.save(r3);
 
-        // 4. Remove previous questions and related dependencies
-        eventRepository.deleteAll();
-        sessionRepository.deleteAll();
-        submissionResultRepository.deleteAll();
-        submissionRepository.deleteAll();
-        lockRepository.deleteAll();
-        testCaseRepository.deleteAll();
-        questionRepository.deleteAll();
-
-                // =========================================================================
-        // 5. ROUND 1 — C PROGRAMMING (FROM DOCX)
-        // =========================================================================
+        // 4. Seed Questions only if not already seeded
+        if (questionRepository.count() == 0) {
+            // =========================================================================
+            // 5. ROUND 1 — C PROGRAMMING (FROM DOCX)
+            // =========================================================================
 
         Question q1_1 = new Question();
         q1_1.setRound(r1);
@@ -484,6 +461,9 @@ public class DataSeeder implements CommandLineRunner {
         testCaseRepository.save(new TestCase(q3_5, "2\\nput 1 1\\nput 2 2\\nget 1\\nput 3 3\\nget 2\\nput 4 4\\nget 1\\nget 3\\nget 4\\n", "1\\n-1\\n-1\\n3\\n4", false, 1));
         testCaseRepository.save(new TestCase(q3_5, "1\\nput 1 10\\nget 1\\nput 2 20\\nget 1\\nget 2\\n", "10\\n-1\\n20", true, 2));
         testCaseRepository.save(new TestCase(q3_5, "2\\nget 2\\nput 2 6\\nget 1\\nput 1 5\\nput 1 2\\nget 1\\nget 2\\n", "-1\\n-1\\n2\\n6", true, 3));
+            System.out.println("[DataSeeder] 5 simple questions per round (15 total) successfully seeded for GCT Code-a-thon 2026.");
+        }
+
         // 8. Seed Announcements if not present
         if (announcementRepository.count() == 0) {
             announcementRepository.save(new Announcement(
@@ -510,7 +490,5 @@ public class DataSeeder implements CommandLineRunner {
                     "admin@gct.org.in"
             ));
         }
-
-        System.out.println("[DataSeeder] 5 simple questions per round (15 total) successfully seeded for GCT Code-a-thon 2026.");
     }
 }
