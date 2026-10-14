@@ -27,7 +27,13 @@ import {
   Search,
   Download,
   Trophy,
-  Filter
+  Filter,
+  Eye,
+  FileText,
+  Printer,
+  AlertTriangle,
+  ShieldCheck,
+  Code2
 } from 'lucide-react';
 import { api, getUser, logout, subscribeToEvents } from '@/lib/api';
 import CustomModal, { ModalConfig } from '@/components/shared/CustomModal';
@@ -35,12 +41,22 @@ import CustomModal, { ModalConfig } from '@/components/shared/CustomModal';
 export default function AdminConsolePage() {
   const router = useRouter();
   const [stats, setStats] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'leaderboard' | 'rounds' | 'questions' | 'participants' | 'announcements' | 'audit' | 'integrity'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'leaderboard' | 'reports' | 'rounds' | 'questions' | 'participants' | 'announcements' | 'audit' | 'integrity'>('overview');
 
   // Leaderboard states
   const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
   const [lbSearch, setLbSearch] = useState('');
   const [lbDeptFilter, setLbDeptFilter] = useState('ALL');
+
+  // Report states
+  const [reportData, setReportData] = useState<any[]>([]);
+  const [selectedStudentReport, setSelectedStudentReport] = useState<any | null>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [reportSearch, setReportSearch] = useState('');
+  const [reportDeptFilter, setReportDeptFilter] = useState('ALL');
+  const [reportStatusFilter, setReportStatusFilter] = useState('ALL');
+  const [downloadingCsv, setDownloadingCsv] = useState(false);
+  const [expandedCodeId, setExpandedCodeId] = useState<number | null>(null);
 
   // Data states
   const [rounds, setRounds] = useState<any[]>([]);
@@ -78,6 +94,7 @@ export default function AdminConsolePage() {
     api.admin.getAuditLogs().then(setAuditLogs).catch(() => {});
     api.admin.getIntegritySessions().then(setIntegritySessions).catch(() => {});
     api.admin.getIntegrityEvents().then(setIntegrityEvents).catch(() => {});
+    api.admin.getParticipantReports().then(setReportData).catch(() => {});
     api.admin.getLeaderboard().then((res: any) => {
       if (res && res.leaderboard) {
         setLeaderboardData(res.leaderboard);
@@ -253,6 +270,30 @@ export default function AdminConsolePage() {
     document.body.removeChild(link);
   };
 
+  const handleViewStudentReport = async (participantId: number) => {
+    setLoadingDetail(true);
+    try {
+      const res: any = await api.admin.getDetailedParticipantReport(participantId);
+      setSelectedStudentReport(res);
+    } catch (err: any) {
+      showCustomAlert('Report Error', 'Failed to load detailed report: ' + (err.message || 'Unknown error'), 'danger');
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
+
+  const handleDownloadCsv = async () => {
+    setDownloadingCsv(true);
+    try {
+      await api.admin.downloadCsvReport();
+      showCustomAlert('Report Downloaded', 'The official Post-Competition Participant Audit & Activity Report CSV has been downloaded successfully.', 'success');
+    } catch (err: any) {
+      showCustomAlert('Export Error', 'Failed to generate CSV export: ' + (err.message || 'Unknown error'), 'danger');
+    } finally {
+      setDownloadingCsv(false);
+    }
+  };
+
   const handleResetParticipantSession = async (sessionId: number, participantName: string, roundTitle: string) => {
     showCustomConfirm(
       `Restart Round for ${participantName}`,
@@ -344,6 +385,7 @@ export default function AdminConsolePage() {
             {[
               { id: 'overview', label: 'Overview Metrics', icon: <Layers className="w-4 h-4" /> },
               { id: 'leaderboard', label: 'Live Leaderboard', icon: <Trophy className="w-4 h-4 text-amber-400" /> },
+              { id: 'reports', label: 'Post-Event Reports', icon: <Award className="w-4 h-4 text-[#B8E63E]" /> },
               { id: 'rounds', label: 'Round Controls', icon: <Play className="w-4 h-4" /> },
               { id: 'questions', label: 'Question Bank', icon: <Terminal className="w-4 h-4" /> },
               { id: 'participants', label: 'Participants', icon: <Users className="w-4 h-4" /> },
@@ -1195,7 +1237,567 @@ export default function AdminConsolePage() {
             </div>
           </div>
         )}
+
+        {/* TAB: POST-EVENT PARTICIPANT REPORTS & ACTIVITY AUDIT */}
+        {activeTab === 'reports' && (
+          <div className="space-y-6">
+            {/* Header with Department of Information Technology Branding */}
+            <div className="bg-[#242424] p-6 rounded-2xl brutal-border border-white/10 space-y-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 bg-[#B8E63E] text-[#171717] rounded text-[10px] font-mono font-black uppercase tracking-wider">
+                      Official Archive
+                    </span>
+                    <span className="text-xs font-mono text-gray-400">
+                      Organized by: <strong className="text-white">Department of Information Technology by Coding Club</strong>
+                    </span>
+                  </div>
+                  <h2 className="text-2xl font-black font-display text-white tracking-tight">
+                    POST-COMPETITION AUDIT & ACTIVITY REPORTS
+                  </h2>
+                  <p className="text-xs font-mono text-gray-400">
+                    Comprehensive student performance records, submission history, login timestamps, and anti-cheat event logs.
+                  </p>
+                </div>
+
+                {/* Export & Action Buttons */}
+                <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                  <button
+                    onClick={handleDownloadCsv}
+                    disabled={downloadingCsv}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-[#B8E63E] hover:bg-[#a5d22f] text-[#171717] text-xs font-mono font-black uppercase rounded-xl brutal-border brutal-shadow-sm transition-transform active:translate-y-0.5 disabled:opacity-50"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>{downloadingCsv ? 'Exporting...' : 'Export Clean CSV'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => window.print()}
+                    className="flex items-center gap-2 px-3.5 py-2.5 bg-white/10 hover:bg-white/20 text-white text-xs font-mono font-bold uppercase rounded-xl brutal-border transition-colors"
+                  >
+                    <Printer className="w-4 h-4" />
+                    <span>Print Report</span>
+                  </button>
+
+                  <button
+                    onClick={() => loadData()}
+                    className="p-2.5 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white rounded-xl brutal-border transition-colors"
+                    title="Refresh data"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* High-Level Stat Tiles */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-4 border-t border-white/10">
+                <div className="bg-[#171717] p-3.5 rounded-xl border border-white/5">
+                  <div className="text-[10px] font-mono text-gray-400 uppercase font-bold">Enrolled Students</div>
+                  <div className="text-2xl font-black font-display text-white mt-1">{reportData.length}</div>
+                </div>
+
+                <div className="bg-[#171717] p-3.5 rounded-xl border border-white/5">
+                  <div className="text-[10px] font-mono text-gray-400 uppercase font-bold">Active Contestants</div>
+                  <div className="text-2xl font-black font-display text-[#B8E63E] mt-1">
+                    {reportData.filter(r => (r.totalSubmissions || 0) > 0).length}
+                  </div>
+                </div>
+
+                <div className="bg-[#171717] p-3.5 rounded-xl border border-white/5">
+                  <div className="text-[10px] font-mono text-gray-400 uppercase font-bold">Total Submissions</div>
+                  <div className="text-2xl font-black font-display text-[#3155FF] mt-1">
+                    {reportData.reduce((acc, r) => acc + (r.totalSubmissions || 0), 0)}
+                  </div>
+                </div>
+
+                <div className="bg-[#171717] p-3.5 rounded-xl border border-white/5">
+                  <div className="text-[10px] font-mono text-gray-400 uppercase font-bold">Accepted Solutions</div>
+                  <div className="text-2xl font-black font-display text-green-400 mt-1">
+                    {reportData.reduce((acc, r) => acc + (r.passedSubmissions || 0), 0)}
+                  </div>
+                </div>
+
+                <div className="bg-[#171717] p-3.5 rounded-xl border border-white/5">
+                  <div className="text-[10px] font-mono text-gray-400 uppercase font-bold">Total Points Scored</div>
+                  <div className="text-2xl font-black font-display text-[#FFD84D] mt-1">
+                    {reportData.reduce((acc, r) => acc + (r.totalScore || 0), 0)}
+                  </div>
+                </div>
+
+                <div className="bg-[#171717] p-3.5 rounded-xl border border-white/5">
+                  <div className="text-[10px] font-mono text-gray-400 uppercase font-bold">Integrity Violations</div>
+                  <div className="text-2xl font-black font-display text-red-400 mt-1">
+                    {reportData.reduce((acc, r) => acc + (r.totalIntegrityViolations || 0), 0)}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Filter and Search Bar */}
+            <div className="bg-[#242424] p-4 rounded-xl border border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="relative flex-1 w-full">
+                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search student name, email, roll number, college..."
+                  value={reportSearch}
+                  onChange={(e) => setReportSearch(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 bg-[#171717] border border-white/10 rounded-lg text-xs text-white font-mono placeholder:text-gray-500 focus:outline-none focus:border-[#3155FF]"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 w-full md:w-auto">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-3.5 h-3.5 text-gray-400" />
+                  <span className="text-xs font-mono text-gray-400">Dept:</span>
+                  <select
+                    value={reportDeptFilter}
+                    onChange={(e) => setReportDeptFilter(e.target.value)}
+                    className="bg-[#171717] border border-white/10 text-xs text-white font-mono px-2.5 py-1.5 rounded-lg focus:outline-none"
+                  >
+                    <option value="ALL">All Departments</option>
+                    <option value="IT">Information Technology (IT)</option>
+                    <option value="CSE">Computer Science (CSE)</option>
+                    <option value="ECE">ECE</option>
+                    <option value="EEE">EEE</option>
+                    <option value="AIDS">AI & Data Science</option>
+                    <option value="MECH">Mechanical</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono text-gray-400">Status:</span>
+                  <select
+                    value={reportStatusFilter}
+                    onChange={(e) => setReportStatusFilter(e.target.value)}
+                    className="bg-[#171717] border border-white/10 text-xs text-white font-mono px-2.5 py-1.5 rounded-lg focus:outline-none"
+                  >
+                    <option value="ALL">All Students</option>
+                    <option value="ACTIVE_ONLY">Active Submissions Only</option>
+                    <option value="CLEAN_ONLY">Zero Integrity Flags</option>
+                    <option value="FLAGGED">Flagged Violations</option>
+                    <option value="SUSPENDED">Suspended Only</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Master Participant Audit Table */}
+            <div className="bg-[#242424] rounded-2xl brutal-border border-white/10 overflow-hidden shadow-xl">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs font-mono">
+                  <thead className="bg-[#171717] text-gray-400 uppercase text-[10px] tracking-wider border-b border-white/10">
+                    <tr>
+                      <th className="p-3.5 text-center w-12">Rank</th>
+                      <th className="p-3.5">Student Details</th>
+                      <th className="p-3.5">Department & Year</th>
+                      <th className="p-3.5 text-center">R1 (C)</th>
+                      <th className="p-3.5 text-center">R2 (Java)</th>
+                      <th className="p-3.5 text-center">R3 (Python)</th>
+                      <th className="p-3.5 text-center">Submissions</th>
+                      <th className="p-3.5 text-center">Violations</th>
+                      <th className="p-3.5 text-right">Total Score</th>
+                      <th className="p-3.5 text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {reportData
+                      .filter((row) => {
+                        if (!reportSearch) return true;
+                        const s = reportSearch.toLowerCase();
+                        return (
+                          (row.fullName || '').toLowerCase().includes(s) ||
+                          (row.email || '').toLowerCase().includes(s) ||
+                          (row.college || '').toLowerCase().includes(s) ||
+                          (row.department || '').toLowerCase().includes(s)
+                        );
+                      })
+                      .filter((row) => {
+                        if (reportDeptFilter === 'ALL') return true;
+                        return (row.department || '').toUpperCase().includes(reportDeptFilter);
+                      })
+                      .filter((row) => {
+                        if (reportStatusFilter === 'ALL') return true;
+                        if (reportStatusFilter === 'ACTIVE_ONLY') return (row.totalSubmissions || 0) > 0;
+                        if (reportStatusFilter === 'CLEAN_ONLY') return (row.totalIntegrityViolations || 0) === 0;
+                        if (reportStatusFilter === 'FLAGGED') return (row.totalIntegrityViolations || 0) > 0;
+                        if (reportStatusFilter === 'SUSPENDED') return Boolean(row.isSuspended);
+                        return true;
+                      })
+                      .map((row) => {
+                        const r1Subs = row.roundSubmissions?.['Round 1'] ?? 0;
+                        const r2Subs = row.roundSubmissions?.['Round 2'] ?? 0;
+                        const r3Subs = row.roundSubmissions?.['Round 3'] ?? 0;
+                        const flags = row.totalIntegrityViolations ?? 0;
+
+                        return (
+                          <tr key={row.participantId} className="hover:bg-white/[0.03] transition-colors">
+                            <td className="p-3.5 text-center">
+                              <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg font-black text-xs ${
+                                row.rank === 1 ? 'bg-[#FFD84D] text-[#171717] brutal-border' :
+                                row.rank === 2 ? 'bg-slate-300 text-[#171717] brutal-border' :
+                                row.rank === 3 ? 'bg-amber-600 text-white brutal-border' :
+                                'text-gray-400 bg-white/5'
+                              }`}>
+                                {row.rank}
+                              </span>
+                            </td>
+
+                            <td className="p-3.5">
+                              <div className="font-bold text-white text-sm flex items-center gap-2">
+                                <span>{row.fullName || 'Anonymous'}</span>
+                                {row.isSuspended && (
+                                  <span className="px-1.5 py-0.2 bg-red-900/60 text-red-300 text-[9px] rounded font-mono font-bold uppercase">
+                                    Suspended
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[11px] text-gray-400">{row.email}</div>
+                              <div className="text-[10px] text-gray-500 truncate max-w-xs">{row.college || 'Gnanamani College of Technology'}</div>
+                            </td>
+
+                            <td className="p-3.5">
+                              <div className="font-bold text-gray-200">{row.department || 'General'}</div>
+                              <div className="text-[10px] text-gray-400">{row.year || 'Participant'}</div>
+                              {row.lastLoginAt && (
+                                <div className="text-[9px] text-[#B8E63E] font-mono mt-0.5">
+                                  Login: {new Date(row.lastLoginAt).toLocaleTimeString()}
+                                </div>
+                              )}
+                            </td>
+
+                            <td className="p-3.5 text-center">
+                              <span className={`px-2 py-1 rounded text-[11px] font-bold ${
+                                r1Subs > 0 ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'text-gray-600'
+                              }`}>
+                                {r1Subs} subs
+                              </span>
+                            </td>
+
+                            <td className="p-3.5 text-center">
+                              <span className={`px-2 py-1 rounded text-[11px] font-bold ${
+                                r2Subs > 0 ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'text-gray-600'
+                              }`}>
+                                {r2Subs} subs
+                              </span>
+                            </td>
+
+                            <td className="p-3.5 text-center">
+                              <span className={`px-2 py-1 rounded text-[11px] font-bold ${
+                                r3Subs > 0 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'text-gray-600'
+                              }`}>
+                                {r3Subs} subs
+                              </span>
+                            </td>
+
+                            <td className="p-3.5 text-center">
+                              <div className="font-bold text-white">{row.totalSubmissions ?? 0}</div>
+                              <div className="text-[10px] flex items-center justify-center gap-1.5 mt-0.5">
+                                <span className="text-green-400">✓ {row.passedSubmissions ?? 0}</span>
+                                <span className="text-red-400">✗ {row.failedSubmissions ?? 0}</span>
+                              </div>
+                            </td>
+
+                            <td className="p-3.5 text-center">
+                              {flags === 0 ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
+                                  <ShieldCheck className="w-3 h-3" /> Clean
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 text-[10px] font-bold">
+                                  <AlertTriangle className="w-3 h-3" /> {flags} flags
+                                </span>
+                              )}
+                            </td>
+
+                            <td className="p-3.5 text-right">
+                              <span className="text-base font-black font-display text-[#FFD84D]">
+                                {row.totalScore ?? 0}
+                              </span>
+                              <span className="text-[10px] text-gray-400 ml-1">pts</span>
+                            </td>
+
+                            <td className="p-3.5 text-center">
+                              <button
+                                onClick={() => handleViewStudentReport(row.participantId)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#3155FF] hover:bg-blue-600 text-white rounded-lg text-xs font-bold transition-colors shadow"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>Dossier</span>
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+
+                    {reportData.length === 0 && (
+                      <tr>
+                        <td colSpan={10} className="p-10 text-center text-gray-500 font-mono">
+                          No participant data found. Once students register and participate, their clean audit dossiers will appear here.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
+
+      {/* STUDENT DETAILED ACTIVITY DOSSIER MODAL */}
+      {selectedStudentReport && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-[#1f1f1f] max-w-4xl w-full rounded-2xl brutal-border border-white/20 text-white max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-6 bg-[#171717] border-b border-white/10 flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 bg-[#B8E63E] text-[#171717] rounded text-[10px] font-mono font-black uppercase">
+                    Official Student Audit Dossier
+                  </span>
+                  <span className="text-xs font-mono text-gray-400">
+                    Dept of Information Technology
+                  </span>
+                </div>
+                <h3 className="text-2xl font-black font-display text-white">
+                  {selectedStudentReport.summary?.fullName}
+                </h3>
+                <div className="text-xs font-mono text-gray-400 flex flex-wrap gap-x-4 gap-y-1">
+                  <span>Email: <strong className="text-white">{selectedStudentReport.summary?.email}</strong></span>
+                  <span>College: <strong className="text-white">{selectedStudentReport.summary?.college}</strong></span>
+                  <span>Dept: <strong className="text-white">{selectedStudentReport.summary?.department}</strong> ({selectedStudentReport.summary?.year})</span>
+                  <span>Phone: <strong className="text-white">{selectedStudentReport.summary?.phone || 'N/A'}</strong></span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <div className="text-2xl font-black font-display text-[#FFD84D]">
+                    {selectedStudentReport.summary?.totalScore ?? 0} pts
+                  </div>
+                  <div className="text-[10px] font-mono text-gray-400">
+                    Rank #{selectedStudentReport.summary?.rank ?? '-'}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedStudentReport(null)}
+                  className="p-2 bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white rounded-lg text-sm font-mono transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body with Scroll */}
+            <div className="p-6 space-y-6 overflow-y-auto flex-1 font-mono text-xs">
+              {/* Summary Badges */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="bg-[#242424] p-3 rounded-xl border border-white/5">
+                  <span className="text-[10px] text-gray-400 uppercase">Submissions</span>
+                  <div className="text-lg font-bold text-white mt-0.5">
+                    {selectedStudentReport.summary?.totalSubmissions ?? 0}
+                    <span className="text-xs text-gray-400 font-normal ml-1">
+                      (✓{selectedStudentReport.summary?.passedSubmissions ?? 0} ✗{selectedStudentReport.summary?.failedSubmissions ?? 0})
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-[#242424] p-3 rounded-xl border border-white/5">
+                  <span className="text-[10px] text-gray-400 uppercase">Integrity Flags</span>
+                  <div className="text-lg font-bold mt-0.5 flex items-center gap-1.5">
+                    {(selectedStudentReport.summary?.totalIntegrityViolations ?? 0) === 0 ? (
+                      <span className="text-emerald-400 flex items-center gap-1">
+                        <ShieldCheck className="w-4 h-4" /> 0 (Clean)
+                      </span>
+                    ) : (
+                      <span className="text-red-400 flex items-center gap-1">
+                        <AlertTriangle className="w-4 h-4" /> {selectedStudentReport.summary?.totalIntegrityViolations}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="bg-[#242424] p-3 rounded-xl border border-white/5">
+                  <span className="text-[10px] text-gray-400 uppercase">Registered Date</span>
+                  <div className="text-xs font-bold text-white mt-1">
+                    {selectedStudentReport.summary?.registeredAt
+                      ? new Date(selectedStudentReport.summary.registeredAt).toLocaleString()
+                      : 'N/A'}
+                  </div>
+                </div>
+
+                <div className="bg-[#242424] p-3 rounded-xl border border-white/5">
+                  <span className="text-[10px] text-gray-400 uppercase">Last Login</span>
+                  <div className="text-xs font-bold text-[#B8E63E] mt-1">
+                    {selectedStudentReport.summary?.lastLoginAt
+                      ? new Date(selectedStudentReport.summary.lastLoginAt).toLocaleString()
+                      : 'Never'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Competition Sessions */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-bold uppercase text-white flex items-center gap-2 border-b border-white/10 pb-2">
+                  <Clock className="w-4 h-4 text-[#FFD84D]" /> Round Sessions Record
+                </h4>
+                {selectedStudentReport.sessions && selectedStudentReport.sessions.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {selectedStudentReport.sessions.map((s: any, idx: number) => (
+                      <div key={idx} className="bg-[#242424] p-3.5 rounded-xl border border-white/5 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-white text-xs">{s.roundTitle}</span>
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                            s.status === 'COMPLETED' ? 'bg-emerald-500/20 text-emerald-300' :
+                            s.status === 'ACTIVE' ? 'bg-blue-500/20 text-blue-300' : 'bg-red-500/20 text-red-300'
+                          }`}>
+                            {s.status}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-gray-400">
+                          Started: {s.startedAt ? new Date(s.startedAt).toLocaleTimeString() : 'N/A'}
+                        </div>
+                        <div className="text-[10px] text-gray-400">
+                          Ended: {s.endedAt ? new Date(s.endedAt).toLocaleTimeString() : 'In Progress'}
+                        </div>
+                        <div className="text-[10px] text-amber-300 pt-1 border-t border-white/5 flex gap-2">
+                          <span>Tab Switches: {s.tabSwitchCount ?? 0}</span>
+                          <span>Fullscreen Exits: {s.fullscreenExitCount ?? 0}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-gray-500 text-xs italic p-3 bg-[#242424] rounded-xl">
+                    No active competition sessions recorded for this participant yet.
+                  </div>
+                )}
+              </div>
+
+              {/* Submissions & Code Submitted */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-bold uppercase text-white flex items-center gap-2 border-b border-white/10 pb-2">
+                  <Code2 className="w-4 h-4 text-[#3155FF]" /> Submissions & Submitted Source Code
+                </h4>
+                {selectedStudentReport.submissions && selectedStudentReport.submissions.length > 0 ? (
+                  <div className="space-y-3">
+                    {selectedStudentReport.submissions.map((sub: any) => {
+                      const isExpanded = expandedCodeId === sub.id;
+                      return (
+                        <div key={sub.id} className="bg-[#242424] rounded-xl border border-white/5 overflow-hidden">
+                          <div className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-[#2a2a2a]">
+                            <div>
+                              <div className="font-bold text-white text-xs flex items-center gap-2">
+                                <span>{sub.roundTitle} • {sub.questionTitle}</span>
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                  sub.status === 'PASSED' ? 'bg-green-500/20 text-green-300 border border-green-500/30' :
+                                  'bg-red-500/20 text-red-300 border border-red-500/30'
+                                }`}>
+                                  {sub.status} (+{sub.score ?? 0} pts)
+                                </span>
+                              </div>
+                              <div className="text-[10px] text-gray-400 mt-0.5">
+                                Lang: <span className="text-white uppercase font-bold">{sub.language}</span> • Runtime: {sub.executionTimeMs ?? 0}ms • Memory: {sub.memoryUsedKb ?? 0}KB • Submitted: {new Date(sub.submittedAt).toLocaleTimeString()}
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={() => setExpandedCodeId(isExpanded ? null : sub.id)}
+                              className="px-3 py-1 bg-white/10 hover:bg-white/20 text-gray-200 text-[11px] font-bold rounded transition-colors"
+                            >
+                              {isExpanded ? 'Hide Code ▲' : 'View Code ▼'}
+                            </button>
+                          </div>
+
+                          {isExpanded && (
+                            <div className="p-4 bg-[#141414] border-t border-white/5">
+                              <div className="flex items-center justify-between text-[10px] text-gray-400 mb-2">
+                                <span>Language: {sub.language?.toUpperCase()}</span>
+                                <button
+                                  onClick={() => navigator.clipboard.writeText(sub.code || '')}
+                                  className="text-[#B8E63E] hover:underline"
+                                >
+                                  Copy Code
+                                </button>
+                              </div>
+                              <pre className="p-3 bg-[#0d0d0d] rounded-lg border border-white/10 text-emerald-400 font-mono text-[11px] overflow-x-auto max-h-60 leading-relaxed whitespace-pre-wrap">
+                                {sub.code || '// No source code recorded'}
+                              </pre>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-gray-500 text-xs italic p-3 bg-[#242424] rounded-xl">
+                    No code submissions submitted yet.
+                  </div>
+                )}
+              </div>
+
+              {/* Integrity & Anti-Cheat Audit Events */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-bold uppercase text-white flex items-center gap-2 border-b border-white/10 pb-2">
+                  <ShieldAlert className="w-4 h-4 text-red-400" /> Security & Anti-Cheat Events Trail
+                </h4>
+                {selectedStudentReport.integrityEvents && selectedStudentReport.integrityEvents.length > 0 ? (
+                  <div className="bg-[#242424] rounded-xl border border-white/5 overflow-hidden">
+                    <table className="w-full text-left text-[11px]">
+                      <thead className="bg-[#171717] text-gray-400 uppercase text-[9px] border-b border-white/5">
+                        <tr>
+                          <th className="p-2.5">Event Type</th>
+                          <th className="p-2.5">Context</th>
+                          <th className="p-2.5">Question / Round</th>
+                          <th className="p-2.5">Timestamp</th>
+                          <th className="p-2.5 text-right">IP Address</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {selectedStudentReport.integrityEvents.map((evt: any) => (
+                          <tr key={evt.id} className="hover:bg-white/[0.02]">
+                            <td className="p-2.5">
+                              <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 font-bold text-[10px]">
+                                {evt.eventType}
+                              </span>
+                            </td>
+                            <td className="p-2.5 text-gray-300">{evt.eventContext || '—'}</td>
+                            <td className="p-2.5 text-gray-400">{evt.roundTitle} • {evt.questionTitle}</td>
+                            <td className="p-2.5 text-gray-400">
+                              {evt.timestamp ? new Date(evt.timestamp).toLocaleTimeString() : 'N/A'}
+                            </td>
+                            <td className="p-2.5 text-right text-gray-500">{evt.ipAddress || '127.0.0.1'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-emerald-400 text-xs flex items-center gap-2 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Clean Record — No integrity violations or suspicious tab switching recorded for this student!</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-[#171717] border-t border-white/10 flex items-center justify-between">
+              <span className="text-[10px] font-mono text-gray-400">
+                GCT Code-A-Thon 2026 • Department of Information Technology by Coding Club
+              </span>
+              <button
+                onClick={() => setSelectedStudentReport(null)}
+                className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-mono text-xs font-bold rounded-lg transition-colors"
+              >
+                Close Dossier
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit Question Modal */}
       {editingQ && (

@@ -65,11 +65,13 @@ public class DatabaseConfig {
                 ds.setJdbcUrl(jdbcUrl);
                 ds.setUsername(username);
                 ds.setPassword(password);
-                ds.setMaximumPoolSize(10);
-                ds.setMinimumIdle(2);
-                ds.setMaxLifetime(60000); // 60 seconds (prevents closed connection drops on Supabase pooler)
-                ds.setIdleTimeout(30000);
-                ds.setKeepaliveTime(30000);
+                ds.setMaximumPoolSize(8);
+                ds.setMinimumIdle(1);
+                ds.setConnectionTimeout(20000);
+                ds.setValidationTimeout(3000);
+                ds.setMaxLifetime(45000);
+                ds.setIdleTimeout(15000);
+                ds.setKeepaliveTime(10000);
                 ds.setConnectionTestQuery("SELECT 1");
                 return ds;
             } catch (Exception e) {
@@ -103,11 +105,13 @@ public class DatabaseConfig {
                 ds.setJdbcUrl(jdbcUrl);
                 ds.setUsername(username);
                 ds.setPassword(password);
-                ds.setMaximumPoolSize(10);
-                ds.setMinimumIdle(2);
-                ds.setMaxLifetime(60000);
-                ds.setIdleTimeout(30000);
-                ds.setKeepaliveTime(30000);
+                ds.setMaximumPoolSize(8);
+                ds.setMinimumIdle(1);
+                ds.setConnectionTimeout(20000);
+                ds.setValidationTimeout(3000);
+                ds.setMaxLifetime(45000);
+                ds.setIdleTimeout(15000);
+                ds.setKeepaliveTime(10000);
                 ds.setConnectionTestQuery("SELECT 1");
                 log.info("Initialized default Supabase Cloud PostgreSQL DataSource: {}", host);
                 return ds;

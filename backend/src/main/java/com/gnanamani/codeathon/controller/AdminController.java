@@ -30,6 +30,7 @@ public class AdminController {
     private final LeaderboardService leaderboardService;
     private final RealtimeEventService realtimeEventService;
     private final AuditService auditService;
+    private final ReportService reportService;
 
     public AdminController(
             ParticipantRepository participantRepository,
@@ -42,7 +43,8 @@ public class AdminController {
             CompetitionEngineService competitionEngineService,
             LeaderboardService leaderboardService,
             RealtimeEventService realtimeEventService,
-            AuditService auditService) {
+            AuditService auditService,
+            ReportService reportService) {
         this.participantRepository = participantRepository;
         this.submissionRepository = submissionRepository;
         this.roundRepository = roundRepository;
@@ -54,6 +56,7 @@ public class AdminController {
         this.leaderboardService = leaderboardService;
         this.realtimeEventService = realtimeEventService;
         this.auditService = auditService;
+        this.reportService = reportService;
     }
 
     @GetMapping("/stats")
@@ -427,6 +430,28 @@ public class AdminController {
         }).collect(Collectors.toList());
 
         return ResponseEntity.ok(ApiResponse.ok(list));
+    }
+
+    @GetMapping("/reports/participants")
+    public ResponseEntity<ApiResponse<List<ParticipantReportSummaryDto>>> getParticipantReports() {
+        List<ParticipantReportSummaryDto> report = reportService.generateAllParticipantsReport();
+        return ResponseEntity.ok(ApiResponse.ok(report));
+    }
+
+    @GetMapping("/reports/participants/{id}")
+    public ResponseEntity<ApiResponse<ParticipantDetailedReportDto>> getDetailedParticipantReport(
+            @PathVariable Long id) {
+        ParticipantDetailedReportDto detailedReport = reportService.generateDetailedParticipantReport(id);
+        return ResponseEntity.ok(ApiResponse.ok(detailedReport));
+    }
+
+    @GetMapping("/reports/export/csv")
+    public ResponseEntity<byte[]> exportParticipantReportsCsv() {
+        byte[] csvData = reportService.generateCsvReportBytes();
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"gct_codeathon_2026_student_report.csv\"")
+                .header(org.springframework.http.HttpHeaders.CONTENT_TYPE, "text/csv; charset=UTF-8")
+                .body(csvData);
     }
 
     private String getAdminEmail(Authentication authentication) {

@@ -204,6 +204,24 @@ export const api = {
       if (roundId) query += `roundId=${roundId}&`;
       if (participantId) query += `participantId=${participantId}`;
       return fetchWithAuth(`/admin/integrity/events${query ? `?${query}` : ''}`);
+    },
+    getParticipantReports: () => fetchWithAuth('/admin/reports/participants'),
+    getDetailedParticipantReport: (id: number) => fetchWithAuth(`/admin/reports/participants/${id}`),
+    downloadCsvReport: async () => {
+      const token = getToken();
+      const res = await fetch(`${API_BASE}/admin/reports/export/csv`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      if (!res.ok) throw new Error('Failed to download report');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `GCT_CodeAThon_2026_Student_Report_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
     }
   },
 
