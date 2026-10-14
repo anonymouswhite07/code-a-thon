@@ -49,6 +49,7 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setFullName(request.getFullName().trim());
         user.setRole(Role.ROLE_PARTICIPANT);
+        user.setLastLoginAt(java.time.LocalDateTime.now());
         User savedUser = userRepository.save(user);
 
         Participant participant = new Participant(
@@ -68,6 +69,7 @@ public class AuthService {
         return new AuthResponse(token, savedUser.getId(), savedUser.getEmail(), savedUser.getFullName(), savedUser.getRole().name(), savedParticipant.getId());
     }
 
+    @Transactional
     public AuthResponse login(LoginRequest request) {
         String email = request.getEmail().toLowerCase().trim();
 
@@ -84,6 +86,14 @@ public class AuthService {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(email, request.getPassword())
         );
+
+        // Persist login activity, timestamp, and audit log to Supabase
+        user.setLastLoginAt(java.time.LocalDateTime.now());
+        user.setUpdatedAt(java.time.LocalDateTime.now());
+        user = userRepository.save(user);
+
+        auditService.log(user.getEmail(), "USER_LOGGED_IN", "User " + user.getId(),
+                "User logged in successfully with role " + user.getRole(), null);
 
         Long participantId = null;
         if (user.getRole() == Role.ROLE_PARTICIPANT) {
@@ -103,6 +113,8 @@ public class AuthService {
         resp.setEmail(user.getEmail());
         resp.setFullName(user.getFullName());
         resp.setRole(user.getRole().name());
+        resp.setCreatedAt(user.getCreatedAt());
+        resp.setLastLoginAt(user.getLastLoginAt());
 
         if (user.getRole() == Role.ROLE_PARTICIPANT) {
             participantRepository.findByUser(user).ifPresent(p -> {

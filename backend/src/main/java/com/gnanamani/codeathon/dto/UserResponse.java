@@ -10,6 +10,8 @@ public class UserResponse {
     private String department;
     private String year;
     private Integer totalScore;
+    private java.time.LocalDateTime createdAt;
+    private java.time.LocalDateTime lastLoginAt;
 
     public UserResponse() {}
 
@@ -39,4 +41,10 @@ public class UserResponse {
 
     public Integer getTotalScore() { return totalScore; }
     public void setTotalScore(Integer totalScore) { this.totalScore = totalScore; }
+
+    public java.time.LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(java.time.LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public java.time.LocalDateTime getLastLoginAt() { return lastLoginAt; }
+    public void setLastLoginAt(java.time.LocalDateTime lastLoginAt) { this.lastLoginAt = lastLoginAt; }
 }

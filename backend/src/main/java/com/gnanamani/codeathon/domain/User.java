@@ -29,6 +29,8 @@ public class User {
 
     private LocalDateTime updatedAt = LocalDateTime.now();
 
+    private LocalDateTime lastLoginAt;
+
     public User() {}
 
     public User(String email, String passwordHash, String fullName, Role role) {
@@ -60,4 +62,7 @@ public class User {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public LocalDateTime getLastLoginAt() { return lastLoginAt; }
+    public void setLastLoginAt(LocalDateTime lastLoginAt) { this.lastLoginAt = lastLoginAt; }
 }

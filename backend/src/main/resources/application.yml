@@ -13,8 +13,8 @@ spring:
       - optional:file:.env[.properties]
       - optional:file:../.env[.properties]
   datasource:
-    url: ${SPRING_DATASOURCE_URL:${DATABASE_URL:jdbc:h2:mem:codeathondb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}}
-    driverClassName: ${SPRING_DATASOURCE_DRIVER:}
+    url: ${SPRING_DATASOURCE_URL:${DATABASE_URL:postgresql://postgres.qxoedpvxmbseyugwspxc:OW6c3E8ZwHPSq7RP@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require}}
+    driverClassName: ${SPRING_DATASOURCE_DRIVER:org.postgresql.Driver}
     username: ${SPRING_DATASOURCE_USERNAME:sa}
     password: ${SPRING_DATASOURCE_PASSWORD:}
   jpa:

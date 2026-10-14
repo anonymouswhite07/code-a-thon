@@ -67,19 +67,58 @@ public class DatabaseConfig {
                 ds.setPassword(password);
                 ds.setMaximumPoolSize(10);
                 ds.setMinimumIdle(2);
+                ds.setMaxLifetime(60000); // 60 seconds (prevents closed connection drops on Supabase pooler)
+                ds.setIdleTimeout(30000);
+                ds.setKeepaliveTime(30000);
+                ds.setConnectionTestQuery("SELECT 1");
                 return ds;
             } catch (Exception e) {
                 log.warn("Failed to parse PostgreSQL URI: {}. Falling back to standard configuration.", e.getMessage());
             }
         }
 
-        // Standard or H2 default
-        String url = (rawUrl != null && !rawUrl.isEmpty()) 
-                ? rawUrl 
-                : "jdbc:h2:mem:codeathondb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
+        // Default to Supabase PostgreSQL cloud database if rawUrl is unspecified
+        String defaultSupabaseUrl = "postgresql://postgres.qxoedpvxmbseyugwspxc:OW6c3E8ZwHPSq7RP@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require";
+        String url = (rawUrl != null && !rawUrl.isEmpty()) ? rawUrl : defaultSupabaseUrl;
+        
+        if (url.startsWith("postgres://") || url.startsWith("postgresql://")) {
+            // Re-run through PostgreSQL parser
+            try {
+                URI dbUri = new URI(url);
+                String userInfo = dbUri.getUserInfo();
+                String username = defaultUsername;
+                String password = defaultPassword;
+                if (userInfo != null && userInfo.contains(":")) {
+                    String[] parts = userInfo.split(":", 2);
+                    username = parts[0];
+                    password = parts[1];
+                }
+                String host = dbUri.getHost();
+                int port = dbUri.getPort() > 0 ? dbUri.getPort() : 5432;
+                String path = dbUri.getPath();
+                String dbName = (path != null && path.length() > 1) ? path.substring(1) : "postgres";
+                String jdbcUrl = "jdbc:postgresql://" + host + ":" + port + "/" + dbName + "?sslmode=require";
+
+                ds.setDriverClassName("org.postgresql.Driver");
+                ds.setJdbcUrl(jdbcUrl);
+                ds.setUsername(username);
+                ds.setPassword(password);
+                ds.setMaximumPoolSize(10);
+                ds.setMinimumIdle(2);
+                ds.setMaxLifetime(60000);
+                ds.setIdleTimeout(30000);
+                ds.setKeepaliveTime(30000);
+                ds.setConnectionTestQuery("SELECT 1");
+                log.info("Initialized default Supabase Cloud PostgreSQL DataSource: {}", host);
+                return ds;
+            } catch (Exception e) {
+                log.error("Failed to initialize default Supabase connection: {}", e.getMessage());
+            }
+        }
+
         String driver = (defaultDriver != null && !defaultDriver.isEmpty()) 
                 ? defaultDriver 
-                : (url.contains("h2") ? "org.h2.Driver" : "org.postgresql.Driver");
+                : "org.postgresql.Driver";
 
         ds.setJdbcUrl(url);
         ds.setDriverClassName(driver);
