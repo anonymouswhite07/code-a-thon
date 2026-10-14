@@ -9,7 +9,7 @@ echo "================================================="
 
 # Start Isolated Code Runner on internal port 5050
 echo "[Boot] Starting Code Runner Sandbox on internal port 5050..."
-PORT=5050 node /app/runner/server.js &
+RUNNER_PORT=5050 PORT=5050 node /app/runner/server.js &
 
 # Give the runner time to initialize and verify health check
 echo "[Boot] Waiting for Code Runner on http://127.0.0.1:5050/health..."

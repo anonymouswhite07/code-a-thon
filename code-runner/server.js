@@ -5,7 +5,7 @@ const os = require('os');
 const { spawn, execSync } = require('child_process');
 const crypto = require('crypto');
 
-const PORT = process.env.PORT || 5050;
+const PORT = process.env.RUNNER_PORT || 5050;
 
 // Determine available compilers/interpreters
 function tryFindSubBins(parent) {

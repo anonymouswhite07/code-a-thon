@@ -34,6 +34,8 @@ public class SubmissionEvaluationService {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
+    private final EmbeddedCodeExecutionService embeddedCodeExecutionService;
+
     @Value("${app.code-runner.url:http://localhost:5050}")
     private String codeRunnerUrl;
 
@@ -46,7 +48,8 @@ public class SubmissionEvaluationService {
             CompetitionEngineService competitionEngineService,
             RealtimeEventService realtimeEventService,
             ParticipantQuestionLockRepository lockRepository,
-            QuestionOrderingService questionOrderingService) {
+            QuestionOrderingService questionOrderingService,
+            EmbeddedCodeExecutionService embeddedCodeExecutionService) {
         this.submissionRepository = submissionRepository;
         this.submissionResultRepository = submissionResultRepository;
         this.questionRepository = questionRepository;
@@ -56,6 +59,7 @@ public class SubmissionEvaluationService {
         this.realtimeEventService = realtimeEventService;
         this.lockRepository = lockRepository;
         this.questionOrderingService = questionOrderingService;
+        this.embeddedCodeExecutionService = embeddedCodeExecutionService;
         this.restTemplate = new RestTemplate();
         this.objectMapper = new ObjectMapper();
     }
@@ -169,18 +173,13 @@ public class SubmissionEvaluationService {
         runnerRequest.put("memoryLimitMb", question.getMemoryLimitMb());
 
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(runnerRequest, headers);
+            Map<String, Object> root = executeOnRunnerOrFallback(runnerRequest);
 
-            ResponseEntity<String> response = callRunnerExecute(entity);
-            JsonNode root = objectMapper.readTree(response.getBody());
-
-            String overallStatus = root.path("overallStatus").asText("FAILED");
-            double scorePercent = root.path("scorePercent").asDouble(0.0);
-            int executionTimeMs = root.path("executionTimeMs").asInt(0);
-            int memoryKb = root.path("memoryKb").asInt(0);
-            String compileOutput = root.path("compileOutput").asText("");
+            String overallStatus = (String) root.getOrDefault("overallStatus", "FAILED");
+            double scorePercent = root.containsKey("scorePercent") ? ((Number) root.get("scorePercent")).doubleValue() : 0.0;
+            int executionTimeMs = root.containsKey("executionTimeMs") ? ((Number) root.get("executionTimeMs")).intValue() : 0;
+            int memoryKb = root.containsKey("memoryKb") ? ((Number) root.get("memoryKb")).intValue() : 0;
+            String compileOutput = (String) root.getOrDefault("compileOutput", "");
 
             int rawScore = (int) Math.round((scorePercent / 100.0) * question.getPoints());
 
@@ -198,19 +197,19 @@ public class SubmissionEvaluationService {
             submission.setCompileOutput(compileOutput);
 
             // Save individual results
-            JsonNode resultsNode = root.path("results");
+            List<Map<String, Object>> resultsList = (List<Map<String, Object>>) root.get("results");
             List<SubmissionResult> resultList = new ArrayList<>();
-            if (resultsNode.isArray()) {
-                for (JsonNode r : resultsNode) {
+            if (resultsList != null) {
+                for (Map<String, Object> r : resultsList) {
                     SubmissionResult sr = new SubmissionResult();
                     sr.setSubmission(submission);
-                    sr.setTestCaseId(r.path("testCaseId").asText());
-                    sr.setStatus(r.path("status").asText("FAILED"));
-                    sr.setExecutionTimeMs(r.path("executionTimeMs").asInt(0));
-                    sr.setActualOutput(r.path("actualOutput").asText(""));
-                    sr.setExpectedOutput(r.path("expectedOutput").asText(""));
-                    sr.setIsHidden(r.path("isHidden").asBoolean(false));
-                    sr.setError(r.has("error") && !r.get("error").isNull() ? r.get("error").asText() : null);
+                    sr.setTestCaseId(String.valueOf(r.getOrDefault("testCaseId", "")));
+                    sr.setStatus(String.valueOf(r.getOrDefault("status", "FAILED")));
+                    sr.setExecutionTimeMs(r.containsKey("executionTimeMs") ? ((Number) r.get("executionTimeMs")).intValue() : 0);
+                    sr.setActualOutput(String.valueOf(r.getOrDefault("actualOutput", "")));
+                    sr.setExpectedOutput(String.valueOf(r.getOrDefault("expectedOutput", "")));
+                    sr.setIsHidden(Boolean.TRUE.equals(r.get("isHidden")));
+                    sr.setError((String) r.get("error"));
                     resultList.add(sr);
                 }
             }
@@ -290,21 +289,27 @@ public class SubmissionEvaluationService {
         return candidates;
     }
 
-    private ResponseEntity<String> callRunnerExecute(HttpEntity<?> entity) {
+    private Map<String, Object> executeOnRunnerOrFallback(Map<String, Object> runnerRequest) {
         List<String> candidates = getRunnerCandidateUrls();
-        Exception lastException = null;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(runnerRequest, headers);
+
         for (String url : candidates) {
             try {
-                return restTemplate.postForEntity(url + "/execute", entity, String.class);
+                ResponseEntity<String> response = restTemplate.postForEntity(url + "/execute", entity, String.class);
+                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                    JsonNode root = objectMapper.readTree(response.getBody());
+                    return objectMapper.convertValue(root, Map.class);
+                }
             } catch (Exception ex) {
-                log.warn("Failed to reach code runner at {}: {}", url, ex.getMessage());
-                lastException = ex;
+                log.warn("Code runner at {} unreachable ({}), trying alternative...", url, ex.getMessage());
             }
         }
-        if (lastException instanceof RuntimeException) {
-            throw (RuntimeException) lastException;
-        }
-        throw new IllegalStateException("Failed to connect to code runner. Candidates tried: " + candidates, lastException);
+
+        // Seamless fallback to embedded execution engine directly inside the container/JVM
+        log.info("External code runner unavailable. Executing directly via Embedded Engine (language: {})", runnerRequest.get("language"));
+        return embeddedCodeExecutionService.execute(runnerRequest);
     }
 
     public Map<String, Object> runPlaygroundCode(String language, String sourceCode, String customInput) {
@@ -321,14 +326,8 @@ public class SubmissionEvaluationService {
         runnerRequest.put("timeLimitMs", 5000);
         runnerRequest.put("memoryLimitMb", 128);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(runnerRequest, headers);
-
         try {
-            ResponseEntity<String> response = callRunnerExecute(entity);
-            JsonNode root = objectMapper.readTree(response.getBody());
-            Map<String, Object> body = objectMapper.convertValue(root, Map.class);
+            Map<String, Object> body = executeOnRunnerOrFallback(runnerRequest);
             if (body != null) {
                 Map<String, Object> enriched = new HashMap<>(body);
                 List<Map<String, Object>> results = (List<Map<String, Object>>) body.get("results");
@@ -359,14 +358,14 @@ public class SubmissionEvaluationService {
             }
             return body;
         } catch (Exception e) {
-            log.error("Playground execution failed through runner", e);
+            log.error("Playground execution failed", e);
             Map<String, Object> errRes = new HashMap<>();
             errRes.put("overallStatus", "ERROR");
             errRes.put("status", "ERROR");
             errRes.put("exitCode", 1);
             errRes.put("compileOutput", "Execution Engine Error: " + e.getMessage());
             errRes.put("stdout", "");
-            errRes.put("stderr", "Execution Engine Error: " + e.getMessage() + "\nPlease ensure the code execution runner is running.");
+            errRes.put("stderr", "Execution Engine Error: " + e.getMessage());
             errRes.put("results", List.of(Map.of(
                     "testCaseId", "playground-1",
                     "status", "ERROR",
