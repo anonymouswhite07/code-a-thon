@@ -490,5 +490,55 @@ public class DataSeeder implements CommandLineRunner {
                     "admin@gct.org.in"
             ));
         }
+
+        cleanSeededQuestionData();
+    }
+
+    private void cleanSeededQuestionData() {
+        List<Question> questions = questionRepository.findAll();
+        for (Question q : questions) {
+            boolean updated = false;
+            if (q.getDescription() != null && (q.getDescription().contains("\\n") || q.getDescription().contains("$"))) {
+                q.setDescription(q.getDescription()
+                        .replace("\\n", "\n")
+                        .replace("$", ""));
+                updated = true;
+            }
+            if (q.getInputFormat() != null && q.getInputFormat().contains("\\n")) {
+                q.setInputFormat(q.getInputFormat().replace("\\n", "\n"));
+                updated = true;
+            }
+            if (q.getOutputFormat() != null && q.getOutputFormat().contains("\\n")) {
+                q.setOutputFormat(q.getOutputFormat().replace("\\n", "\n"));
+                updated = true;
+            }
+            if (q.getConstraints() != null && q.getConstraints().contains("\\n")) {
+                q.setConstraints(q.getConstraints().replace("\\n", "\n"));
+                updated = true;
+            }
+            if (q.getExamples() != null && q.getExamples().contains("\\n")) {
+                q.setExamples(q.getExamples().replace("\\n", "\n"));
+                updated = true;
+            }
+            if (updated) {
+                questionRepository.save(q);
+            }
+        }
+
+        List<TestCase> testCases = testCaseRepository.findAll();
+        for (TestCase tc : testCases) {
+            boolean updated = false;
+            if (tc.getInputData() != null && tc.getInputData().contains("\\n")) {
+                tc.setInputData(tc.getInputData().replace("\\n", "\n"));
+                updated = true;
+            }
+            if (tc.getExpectedOutput() != null && tc.getExpectedOutput().contains("\\n")) {
+                tc.setExpectedOutput(tc.getExpectedOutput().replace("\\n", "\n"));
+                updated = true;
+            }
+            if (updated) {
+                testCaseRepository.save(tc);
+            }
+        }
     }
 }

@@ -39,6 +39,14 @@ const MAX_RUNS_PER_CHALLENGE = 3;
 const MAX_SUBMISSIONS_PER_CHALLENGE = 4;
 const RETRY_PENALTY_POINTS = 25;
 
+const cleanText = (str?: string) => {
+  if (!str) return '';
+  return str
+    .replace(/\\n/g, '\n')
+    .replace(/\$([a-zA-Z0-9_\^]+)\$/g, '$1')
+    .replace(/\$/g, '');
+};
+
 const enterFullscreen = () => {
   if (typeof document === 'undefined') return Promise.resolve(false);
   const elem: any = document.documentElement;
@@ -293,7 +301,7 @@ export default function CompeteArenaPage() {
           savedInput = localStorage.getItem(getInputKey(qId)) || '';
         }
         if (!savedInput || savedInput.trim().length === 0) {
-          savedInput = detail.sampleTestCases?.[0]?.inputData || '';
+          savedInput = cleanText(detail.sampleTestCases?.[0]?.inputData || '').trimEnd();
         }
         inputDraftsRef.current[qId] = savedInput;
         setCustomInput(savedInput);
@@ -1097,7 +1105,7 @@ export default function CompeteArenaPage() {
   };
 
   const handleCopyInput = (text: string) => {
-    navigator.clipboard.writeText(text);
+    navigator.clipboard.writeText(cleanText(text).trimEnd());
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -1521,7 +1529,7 @@ export default function CompeteArenaPage() {
 
                 {/* Problem Description */}
                 <div className="space-y-2 text-gray-800 leading-relaxed font-medium whitespace-pre-line bg-gray-50 p-4 rounded-xl border border-gray-200">
-                  {activeQuestion.description}
+                  {cleanText(activeQuestion.description)}
                 </div>
 
                 {/* Input / Output Formats */}
@@ -1530,8 +1538,8 @@ export default function CompeteArenaPage() {
                     <h4 className="font-mono text-xs font-bold uppercase text-gray-500">
                       Input Format
                     </h4>
-                    <div className="p-3 bg-gray-50 rounded-lg text-xs font-mono text-gray-800 border">
-                      {activeQuestion.inputFormat}
+                    <div className="p-3 bg-gray-50 rounded-lg text-xs font-mono text-gray-800 border whitespace-pre-line">
+                      {cleanText(activeQuestion.inputFormat)}
                     </div>
                   </div>
                 )}
@@ -1541,8 +1549,8 @@ export default function CompeteArenaPage() {
                     <h4 className="font-mono text-xs font-bold uppercase text-gray-500">
                       Output Format
                     </h4>
-                    <div className="p-3 bg-gray-50 rounded-lg text-xs font-mono text-gray-800 border">
-                      {activeQuestion.outputFormat}
+                    <div className="p-3 bg-gray-50 rounded-lg text-xs font-mono text-gray-800 border whitespace-pre-line">
+                      {cleanText(activeQuestion.outputFormat)}
                     </div>
                   </div>
                 )}
@@ -1553,8 +1561,8 @@ export default function CompeteArenaPage() {
                     <h4 className="font-mono text-xs font-bold uppercase text-gray-500">
                       Constraints
                     </h4>
-                    <div className="p-3 bg-[#F7F4ED] rounded-lg text-xs font-mono text-gray-800 border">
-                      {activeQuestion.constraints}
+                    <div className="p-3 bg-[#F7F4ED] rounded-lg text-xs font-mono text-gray-800 border whitespace-pre-line">
+                      {cleanText(activeQuestion.constraints)}
                     </div>
                   </div>
                 )}
@@ -1580,11 +1588,11 @@ export default function CompeteArenaPage() {
                         <div className="grid grid-cols-2 gap-2 text-xs font-mono">
                           <div>
                             <div className="text-[10px] text-gray-400 uppercase">Input</div>
-                            <pre className="p-2 bg-white rounded border overflow-x-auto">{tc.inputData || '(empty)'}</pre>
+                            <pre className="p-2 bg-white rounded border overflow-x-auto whitespace-pre-wrap">{cleanText(tc.inputData).trimEnd() || '(empty)'}</pre>
                           </div>
                           <div>
                             <div className="text-[10px] text-gray-400 uppercase">Expected Output</div>
-                            <pre className="p-2 bg-white rounded border overflow-x-auto">{tc.expectedOutput}</pre>
+                            <pre className="p-2 bg-white rounded border overflow-x-auto whitespace-pre-wrap">{cleanText(tc.expectedOutput).trimEnd()}</pre>
                           </div>
                         </div>
                       </div>
